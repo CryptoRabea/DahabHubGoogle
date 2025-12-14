@@ -49,7 +49,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleBookingAction = async (id: string, status: BookingStatus) => {
     await db.updateBookingStatus(id, status);
-    loadData();
+    await loadData();
   };
 
   const handleProviderAction = async (userId: string, approve: boolean) => {
@@ -58,7 +58,7 @@ const AdminDashboard: React.FC = () => {
     } else {
       await db.rejectProvider(userId);
     }
-    loadData();
+    await loadData();
   };
 
   // --- Event Handlers ---
@@ -94,18 +94,18 @@ const AdminDashboard: React.FC = () => {
   const handleDeleteEvent = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       await db.deleteEvent(id);
-      loadData();
+      await loadData(); // Properly await reload to refresh UI
     }
   };
 
   const handleApproveEvent = async (event: Event) => {
     await db.updateEvent({ ...event, status: 'approved' });
-    loadData();
+    await loadData();
   };
 
   const handleRejectEvent = async (event: Event) => {
     await db.updateEvent({ ...event, status: 'rejected' });
-    loadData();
+    await loadData();
   };
 
   const handleSaveSettings = async () => {
@@ -124,20 +124,6 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleAddHeroImage = () => {
-    if (newHeroImage) {
-      setLocalSettings(prev => ({ ...prev, heroImages: [...prev.heroImages, newHeroImage] }));
-      setNewHeroImage('');
-    }
-  };
-
-  const handleRemoveHeroImage = (index: number) => {
-    setLocalSettings(prev => ({
-      ...prev,
-      heroImages: prev.heroImages.filter((_, i) => i !== index)
-    }));
-  };
-
   const pendingEvents = events.filter(e => e.status === 'pending');
 
   return (
@@ -147,33 +133,33 @@ const AdminDashboard: React.FC = () => {
         <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
           <button 
             onClick={() => setActiveTab('bookings')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'bookings' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'bookings' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}
           >
             Bookings ({bookings.filter(b => b.status === BookingStatus.PENDING).length})
           </button>
            <button 
             onClick={() => setActiveTab('verifications')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'verifications' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'verifications' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}
           >
             Verifications
             {pendingProviders.length > 0 && <span className="bg-red-500 text-white text-xs px-1.5 rounded-full">{pendingProviders.length}</span>}
           </button>
           <button 
             onClick={() => setActiveTab('pending-events')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'pending-events' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'pending-events' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}
           >
             Event Approvals
              {pendingEvents.length > 0 && <span className="bg-orange-500 text-white text-xs px-1.5 rounded-full">{pendingEvents.length}</span>}
           </button>
           <button 
             onClick={() => setActiveTab('events')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'events' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'events' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}
           >
             All Events
           </button>
           <button 
             onClick={() => setActiveTab('settings')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'settings' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'settings' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}
           >
             <Settings size={18} /> Settings
           </button>
@@ -198,7 +184,7 @@ const AdminDashboard: React.FC = () => {
                   <tr><td colSpan={5} className="p-8 text-center text-gray-400">No bookings found</td></tr>
                 )}
                 {bookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50">
+                  <tr key={booking.id} className="hover:bg-gray-50 text-gray-900">
                     <td className="p-4 font-medium">{booking.userName}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${booking.itemType === 'event' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
@@ -235,7 +221,7 @@ const AdminDashboard: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex items-center gap-2">
             <UserCheck className="text-dahab-teal" />
-            <h3 className="font-bold">Pending Provider Applications</h3>
+            <h3 className="font-bold text-gray-900">Pending Provider Applications</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -252,7 +238,7 @@ const AdminDashboard: React.FC = () => {
                   <tr><td colSpan={4} className="p-8 text-center text-gray-400">No pending verifications</td></tr>
                 )}
                 {pendingProviders.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-gray-50 text-gray-900">
                     <td className="p-4 font-bold">{user.name}</td>
                     <td className="p-4 text-gray-600">{user.email}</td>
                     <td className="p-4">
@@ -286,7 +272,7 @@ const AdminDashboard: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex items-center gap-2">
              <AlertCircle className="text-orange-500" />
-             <h3 className="font-bold">Pending Event Approvals</h3>
+             <h3 className="font-bold text-gray-900">Pending Event Approvals</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -303,7 +289,7 @@ const AdminDashboard: React.FC = () => {
                   <tr><td colSpan={4} className="p-8 text-center text-gray-400">No pending events</td></tr>
                 )}
                 {pendingEvents.map((event) => (
-                  <tr key={event.id} className="hover:bg-gray-50">
+                  <tr key={event.id} className="hover:bg-gray-50 text-gray-900">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img src={event.imageUrl} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
@@ -348,7 +334,7 @@ const AdminDashboard: React.FC = () => {
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
              <div className="flex items-center gap-2">
                <Calendar className="text-dahab-teal" />
-               <h3 className="font-bold">All Events</h3>
+               <h3 className="font-bold text-gray-900">All Events</h3>
              </div>
              <button 
                onClick={() => handleOpenEventModal()}
@@ -369,7 +355,7 @@ const AdminDashboard: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {events.map((event) => (
-                  <tr key={event.id} className="hover:bg-gray-50">
+                  <tr key={event.id} className="hover:bg-gray-50 text-gray-900">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img src={event.imageUrl} className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
@@ -416,9 +402,9 @@ const AdminDashboard: React.FC = () => {
 
       {activeTab === 'settings' && (
         <div className="space-y-6">
-          {/* Settings content same as before */}
+          {/* Settings content */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
               <ImageIcon size={20} className="text-dahab-teal" /> App Branding
             </h3>
             <div className="space-y-4">
@@ -428,14 +414,14 @@ const AdminDashboard: React.FC = () => {
                   type="text" 
                   value={localSettings.appName}
                   onChange={(e) => setLocalSettings(prev => ({...prev, appName: e.target.value}))}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white text-gray-900"
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Logo</label>
                 <div className="flex items-center gap-4">
                   {localSettings.logoUrl ? (
-                    <div className="w-16 h-16 border rounded-lg p-1">
+                    <div className="w-16 h-16 border rounded-lg p-1 bg-white">
                       <img src={localSettings.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                     </div>
                   ) : (
@@ -462,7 +448,7 @@ const AdminDashboard: React.FC = () => {
           </div>
           
            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
               <Palette size={20} className="text-dahab-teal" /> Appearance
             </h3>
             <div>
@@ -481,7 +467,7 @@ const AdminDashboard: React.FC = () => {
               <textarea 
                 value={localSettings.backgroundStyle}
                 onChange={(e) => setLocalSettings(prev => ({...prev, backgroundStyle: e.target.value}))}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm font-mono h-20"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm font-mono h-20 bg-white text-gray-900"
                 placeholder="CSS background property..."
               />
             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Phone, ShieldCheck } from 'lucide-react';
+import { Star, Phone, ShieldCheck, Car, Briefcase } from 'lucide-react';
 import { ServiceProvider, User } from '../types';
 import { db } from '../services/mockDatabase';
 import ReviewsModal from '../components/ReviewsModal';
@@ -62,14 +62,27 @@ const Services: React.FC<ServicesProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="bg-blue-50 p-4 rounded-xl flex items-center justify-between border border-blue-100">
+        <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h3 className="font-bold text-blue-900">Drive with AmakenDahab</h3>
-            <p className="text-sm text-blue-700">Are you a service provider? List your service here.</p>
+            <h3 className="font-bold text-blue-900 text-lg">Drive or Work with AmakenDahab</h3>
+            <p className="text-sm text-blue-700">Join our verified network of local professionals.</p>
           </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700">
-            Join Now
-          </button>
+          <div className="flex gap-3">
+             <Link 
+               to="/login?role=provider" 
+               className="bg-white text-blue-600 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-50 flex items-center gap-2"
+             >
+               <Car size={16} />
+               Are you a Driver?
+             </Link>
+             <Link 
+               to="/login?role=provider" 
+               className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2"
+             >
+               <Briefcase size={16} />
+               List a Service
+             </Link>
+          </div>
         </div>
       </div>
 

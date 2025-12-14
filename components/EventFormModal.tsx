@@ -125,7 +125,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose, onSubm
                   required
                   value={formData.title}
                   onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none bg-white text-gray-900"
                   placeholder="Event Name"
                 />
               </div>
@@ -136,7 +136,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose, onSubm
               <select 
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value as any})}
-                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none bg-white"
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none bg-white text-gray-900"
               >
                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
@@ -153,7 +153,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose, onSubm
                   required
                   value={formData.date}
                   onChange={e => setFormData({...formData, date: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none bg-white text-gray-900"
                 />
               </div>
             </div>
@@ -165,7 +165,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose, onSubm
                 value={formData.time}
                 onChange={e => setFormData({...formData, time: e.target.value})}
                 placeholder="08:00 AM"
-                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none"
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none bg-white text-gray-900"
               />
             </div>
           </div>
@@ -180,7 +180,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose, onSubm
                   required
                   value={formData.location}
                   onChange={e => setFormData({...formData, location: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none bg-white text-gray-900"
                   placeholder="Place name"
                 />
               </div>
@@ -194,7 +194,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose, onSubm
                   required
                   value={formData.price}
                   onChange={e => setFormData({...formData, price: Number(e.target.value)})}
-                  className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none bg-white text-gray-900"
                 />
               </div>
             </div>
@@ -206,7 +206,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose, onSubm
                required
                value={formData.description}
                onChange={e => setFormData({...formData, description: e.target.value})}
-               className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none h-24 resize-none"
+               className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-dahab-teal/50 outline-none h-24 resize-none bg-white text-gray-900"
                placeholder="Tell people about the event..."
              />
           </div>
