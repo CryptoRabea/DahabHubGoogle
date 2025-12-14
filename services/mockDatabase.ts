@@ -1,431 +1,409 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
 
+// Default settings if none exist in DB
 const INITIAL_SETTINGS: AppSettings = {
-  appName: 'Dahab Echo',
-  logoUrl: '', // Empty defaults to text, Admin can upload the logo
+  appName: 'AmakenDahab',
+  logoUrl: '', 
   heroImages: [
-    "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop", // Red Sea Reef
-    "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop", // Clear Beach/Sea
-    "https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=1920&auto=format&fit=crop", // Desert Mountains
-    "https://images.unsplash.com/photo-1539768942893-daf53e448371?q=80&w=1920&auto=format&fit=crop", // Palms & Beach
+    "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop"
   ],
-  backgroundStyle: `radial-gradient(at 0% 0%, hsla(172, 85%, 93%, 1) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(45, 90%, 96%, 1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, hsla(200, 85%, 95%, 1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(180, 80%, 94%, 1) 0px, transparent 50%)`
+  backgroundStyle: 'linear-gradient(to bottom, #0f172a, #1e293b)'
 };
 
-// Initial Seed Data
-const INITIAL_EVENTS: Event[] = [
+// Seed Data for initial load
+const SEED_EVENTS: Event[] = [
   {
-    id: 'e1',
-    title: 'Blue Hole Deep Dive',
-    description: 'Join us for a guided deep dive at the famous Blue Hole. Advanced divers only.',
-    date: '2024-06-15',
-    time: '08:00 AM',
-    location: 'Blue Hole, Dahab',
-    coordinates: { lat: 28.5724, lng: 34.5372 },
-    price: 1500,
-    imageUrl: 'https://picsum.photos/800/600?random=1',
-    organizerId: 'admin1',
+    id: '1',
+    title: 'Blue Hole Diving',
+    description: 'Experience the legendary Blue Hole with certified guides. Suitable for advanced divers.',
+    date: '2024-12-01',
+    time: '09:00 AM',
+    location: 'Blue Hole',
+    price: 450,
+    imageUrl: 'https://images.unsplash.com/photo-1582967788606-a171f1080ca8?auto=format&fit=crop&q=80&w=1000',
     category: 'Diving',
+    organizerId: 'admin1',
     status: 'approved'
   },
   {
-    id: 'e2',
+    id: '2',
     title: 'Laguna Sunset Yoga',
-    description: 'Relax and unwind with a sunset yoga session at the Laguna sandbar.',
-    date: '2024-06-16',
-    time: '05:30 PM',
-    location: 'The Laguna',
-    coordinates: { lat: 28.4836, lng: 34.5097 },
-    price: 300,
-    imageUrl: 'https://picsum.photos/800/600?random=2',
-    organizerId: 'admin1',
+    description: 'Relaxing yoga session by the lagoon at sunset. Bring your own mat.',
+    date: '2024-12-02',
+    time: '17:00 PM',
+    location: 'Laguna',
+    price: 150,
+    imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=1000',
     category: 'Wellness',
+    organizerId: 'admin1',
     status: 'approved'
   },
   {
-    id: 'e3',
-    title: 'Friday Night Social',
-    description: 'Community gathering with live music and local food.',
-    date: '2024-06-18',
-    time: '09:00 PM',
-    location: 'Lighthouse Area',
-    coordinates: { lat: 28.5020, lng: 34.5195 },
-    price: 200,
-    imageUrl: 'https://picsum.photos/800/600?random=3',
-    organizerId: 'admin1',
+    id: '3',
+    title: 'Full Moon Desert Party',
+    description: 'Music, dancing, and bonfire under the stars in Wadi Gnai.',
+    date: '2024-12-05',
+    time: '21:00 PM',
+    location: 'Wadi Gnai',
+    price: 300,
+    imageUrl: 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&q=80&w=1000',
     category: 'Party',
+    organizerId: 'admin1',
     status: 'approved'
   }
 ];
 
-const INITIAL_PROVIDERS: ServiceProvider[] = [
+const SEED_PROVIDERS: ServiceProvider[] = [
   {
     id: 'p1',
-    name: 'Ahmed Taxi',
+    name: 'Ahmed Driver',
     serviceType: 'Driver',
-    description: 'Reliable airport transfers and trips to Blue Hole/Three Pools.',
-    phone: '0100000001',
+    description: 'Reliable pickup truck, airport transfers, and blue hole trips.',
+    phone: '01000000001',
     rating: 4.8,
-    imageUrl: 'https://picsum.photos/200/200?random=4',
-    isVerified: true
-  },
-  {
-    id: 'p2',
-    name: 'Sara Home Care',
-    serviceType: 'Cleaner',
-    description: 'Professional housekeeping and laundry services.',
-    phone: '0100000002',
-    rating: 4.9,
-    imageUrl: 'https://picsum.photos/200/200?random=5',
+    imageUrl: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=200',
     isVerified: true
   }
 ];
 
-const INITIAL_REVIEWS: Review[] = [
-  {
-    id: 'r1',
-    itemId: 'p1',
-    userId: 'u99',
-    userName: 'Jessica M.',
-    rating: 5,
-    comment: 'Ahmed is always on time and plays great music!',
-    timestamp: '2024-05-10T10:00:00Z'
-  },
-  {
-    id: 'r2',
-    itemId: 'e1',
-    userId: 'u98',
-    userName: 'Tom H.',
-    rating: 5,
-    comment: 'Incredible experience. The guide was very professional.',
-    timestamp: '2024-06-01T14:30:00Z'
+// Helper to simulate network delay
+const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
+
+// LocalStorage Helpers
+const getItem = <T>(key: string, defaultVal: T): T => {
+  try {
+    const val = localStorage.getItem(key);
+    return val ? JSON.parse(val) : defaultVal;
+  } catch (e) {
+    return defaultVal;
   }
-];
+};
 
-const INITIAL_POSTS: Post[] = [
-  {
-    id: 'post1',
-    authorId: 'admin1',
-    authorName: 'Rahma Organizer',
-    authorRole: UserRole.ADMIN,
-    content: 'Welcome to the AmakenDahab community hub! Share your photos, ask questions, or just say hi. 🌊☀️',
-    imageUrl: 'https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=800&auto=format&fit=crop',
-    likes: ['u99', 'u98'],
-    comments: [
-      { id: 'c1', authorId: 'u99', authorName: 'Jessica M.', content: 'Love this app! Dahab needed this.', timestamp: '2024-06-01T10:00:00Z' }
-    ],
-    timestamp: '2024-06-01T09:00:00Z'
-  },
-  {
-    id: 'post2',
-    authorId: 'p1',
-    authorName: 'Ahmed Taxi',
-    authorRole: UserRole.PROVIDER,
-    content: 'Available for pickups from Sharm airport all day tomorrow. DM me or book through the services tab! 🚕',
-    likes: [],
-    comments: [],
-    timestamp: '2024-06-10T15:30:00Z'
+const setItem = (key: string, val: any) => {
+  localStorage.setItem(key, JSON.stringify(val));
+};
+
+class DatabaseService {
+  constructor() {
+    this._initSeeds();
   }
-];
 
-// Helper to simulate DB delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-class MockDatabase {
-  private getStorage<T>(key: string, initial: T): T {
-    const stored = localStorage.getItem(key);
-    if (!stored) {
-      localStorage.setItem(key, JSON.stringify(initial));
-      return initial;
+  private _initSeeds() {
+    if (!localStorage.getItem('events')) {
+      setItem('events', SEED_EVENTS);
     }
-    return JSON.parse(stored);
+    if (!localStorage.getItem('providers')) {
+      setItem('providers', SEED_PROVIDERS);
+    }
+    if (!localStorage.getItem('settings')) {
+      setItem('settings', INITIAL_SETTINGS);
+    }
+    // Ensure an admin user exists for testing
+    const users = getItem<User[]>('users', []);
+    if (!users.find(u => u.email === 'admin@dahab.com')) {
+        const admin: User = {
+            id: 'admin1',
+            name: 'Admin User',
+            email: 'admin@dahab.com',
+            role: UserRole.ADMIN,
+            savedEventIds: []
+        };
+        users.push(admin);
+        setItem('users', users);
+    }
   }
 
-  private setStorage(key: string, data: any) {
-    localStorage.setItem(key, JSON.stringify(data));
+  // --- AUTHENTICATION ---
+
+  async login(email: string, password: string): Promise<User> {
+    await delay();
+    const users = getItem<User[]>('users', []);
+    const user = users.find(u => u.email === email);
+    
+    // In a real app, verify password hash. Here we just mock success if user exists.
+    if (user) {
+      return user;
+    } else {
+      // Mock failure
+      throw new Error("auth/user-not-found");
+    }
+  }
+
+  async register(name: string, email: string, password: string, isProvider: boolean): Promise<User> {
+    await delay();
+    const users = getItem<User[]>('users', []);
+    
+    if (users.find(u => u.email === email)) {
+      throw new Error("auth/email-already-in-use");
+    }
+
+    const newUser: User = {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+      email,
+      role: isProvider ? UserRole.PROVIDER : UserRole.USER,
+      providerStatus: isProvider ? 'pending' : undefined,
+      isEmailVerified: false,
+      provider: 'email',
+      savedEventIds: []
+    };
+
+    users.push(newUser);
+    setItem('users', users);
+    return newUser;
+  }
+
+  async socialLogin(providerType: 'google' | 'facebook'): Promise<User> {
+    await delay();
+    const users = getItem<User[]>('users', []);
+    // Simulate a user based on provider
+    const email = `testuser@${providerType}.com`;
+    let user = users.find(u => u.email === email);
+
+    if (!user) {
+      user = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: `${providerType.charAt(0).toUpperCase() + providerType.slice(1)} User`,
+        email,
+        role: UserRole.USER,
+        isEmailVerified: true,
+        provider: providerType as any,
+        savedEventIds: []
+      };
+      users.push(user);
+      setItem('users', users);
+    }
+    return user;
+  }
+
+  async logout(): Promise<void> {
+    await delay(100);
+    // No-op for local mock
   }
 
   // --- SETTINGS ---
   async getSettings(): Promise<AppSettings> {
-    await delay(200);
-    return this.getStorage<AppSettings>('dahab_settings', INITIAL_SETTINGS);
+    await delay(100);
+    return getItem<AppSettings>('settings', INITIAL_SETTINGS);
   }
 
   async updateSettings(settings: AppSettings): Promise<void> {
-    await delay(300);
-    this.setStorage('dahab_settings', settings);
+    await delay();
+    setItem('settings', settings);
   }
 
   // --- EVENTS ---
   async getEvents(): Promise<Event[]> {
-    await delay(300);
-    return this.getStorage<Event[]>('dahab_events', INITIAL_EVENTS);
+    await delay();
+    return getItem<Event[]>('events', []);
   }
 
   async getPublicEvents(): Promise<Event[]> {
-    const events = await this.getEvents();
+    await delay();
+    const events = getItem<Event[]>('events', []);
     return events.filter(e => e.status === 'approved');
   }
 
   async addEvent(event: Event): Promise<void> {
-    await delay(500);
-    const events = await this.getEvents();
-    this.setStorage('dahab_events', [event, ...events]);
+    await delay();
+    const events = getItem<Event[]>('events', []);
+    events.push(event);
+    setItem('events', events);
   }
 
   async updateEvent(updatedEvent: Event): Promise<void> {
-    await delay(400);
-    const events = await this.getEvents();
-    const newEvents = events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
-    this.setStorage('dahab_events', newEvents);
+    await delay();
+    const events = getItem<Event[]>('events', []);
+    const index = events.findIndex(e => e.id === updatedEvent.id);
+    if (index !== -1) {
+      events[index] = updatedEvent;
+      setItem('events', events);
+    }
   }
 
   async deleteEvent(eventId: string): Promise<void> {
-    await delay(300);
-    const events = await this.getEvents();
-    const newEvents = events.filter(e => e.id !== eventId);
-    this.setStorage('dahab_events', newEvents);
+    await delay();
+    const events = getItem<Event[]>('events', []);
+    const filtered = events.filter(e => e.id !== eventId);
+    setItem('events', filtered);
   }
 
   // --- PROVIDERS ---
   async getProviders(): Promise<ServiceProvider[]> {
-    await delay(300);
-    return this.getStorage<ServiceProvider[]>('dahab_providers', INITIAL_PROVIDERS);
-  }
-
-  async addProvider(provider: ServiceProvider): Promise<void> {
-    await delay(500);
-    const providers = await this.getProviders();
-    this.setStorage('dahab_providers', [...providers, provider]);
+    await delay();
+    return getItem<ServiceProvider[]>('providers', []);
   }
 
   // --- REVIEWS ---
   async getReviews(itemId: string): Promise<Review[]> {
-    await delay(300);
-    const reviews = this.getStorage<Review[]>('dahab_reviews', INITIAL_REVIEWS);
+    await delay();
+    const reviews = getItem<Review[]>('reviews', []);
     return reviews
       .filter(r => r.itemId === itemId)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
 
   async addReview(review: Review): Promise<void> {
-    await delay(500);
-    const reviews = await this.getStorage<Review[]>('dahab_reviews', INITIAL_REVIEWS);
-    this.setStorage('dahab_reviews', [review, ...reviews]);
+    await delay();
+    const reviews = getItem<Review[]>('reviews', []);
+    reviews.push(review);
+    setItem('reviews', reviews);
 
-    if (review.itemId.startsWith('p')) {
-      const providers = await this.getProviders();
-      const itemReviews = [review, ...reviews.filter(r => r.itemId === review.itemId)];
-      const avg = itemReviews.reduce((acc, curr) => acc + curr.rating, 0) / itemReviews.length;
-      
-      const updatedProviders = providers.map(p => 
-        p.id === review.itemId ? { ...p, rating: Number(avg.toFixed(1)) } : p
-      );
-      this.setStorage('dahab_providers', updatedProviders);
+    // Update Provider Rating Aggregation
+    if (review.itemId.startsWith('p') || review.itemId.length > 5) {
+       const itemReviews = reviews.filter(r => r.itemId === review.itemId);
+       const avg = itemReviews.reduce((acc, curr) => acc + curr.rating, 0) / itemReviews.length;
+       
+       const providers = getItem<ServiceProvider[]>('providers', []);
+       const pIndex = providers.findIndex(p => p.id === review.itemId);
+       if (pIndex !== -1) {
+         providers[pIndex].rating = Number(avg.toFixed(1));
+         setItem('providers', providers);
+       }
     }
   }
 
   // --- SOCIAL HUB (POSTS) ---
   async getPosts(): Promise<Post[]> {
-    await delay(400);
-    const posts = this.getStorage<Post[]>('dahab_posts', INITIAL_POSTS);
+    await delay();
+    const posts = getItem<Post[]>('posts', []);
     return posts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
 
   async createPost(post: Post): Promise<void> {
-    await delay(600);
-    const posts = await this.getPosts();
-    this.setStorage('dahab_posts', [post, ...posts]);
+    await delay();
+    const posts = getItem<Post[]>('posts', []);
+    posts.unshift(post);
+    setItem('posts', posts);
   }
 
   async toggleLikePost(postId: string, userId: string): Promise<void> {
-    await delay(200);
-    const posts = await this.getPosts();
-    const updatedPosts = posts.map(p => {
-      if (p.id === postId) {
-        const hasLiked = p.likes.includes(userId);
-        return {
-          ...p,
-          likes: hasLiked ? p.likes.filter(id => id !== userId) : [...p.likes, userId]
-        };
-      }
-      return p;
-    });
-    this.setStorage('dahab_posts', updatedPosts);
+    await delay(100);
+    const posts = getItem<Post[]>('posts', []);
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      const hasLiked = post.likes.includes(userId);
+      post.likes = hasLiked ? post.likes.filter(id => id !== userId) : [...post.likes, userId];
+      setItem('posts', posts);
+    }
   }
 
   async addComment(postId: string, comment: Comment): Promise<void> {
-    await delay(400);
-    const posts = await this.getPosts();
-    const updatedPosts = posts.map(p => {
-      if (p.id === postId) {
-        return { ...p, comments: [...p.comments, comment] };
-      }
-      return p;
-    });
-    this.setStorage('dahab_posts', updatedPosts);
+    await delay();
+    const posts = getItem<Post[]>('posts', []);
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      post.comments = [...(post.comments || []), comment];
+      setItem('posts', posts);
+    }
   }
 
   // --- BOOKINGS ---
   async getBookings(): Promise<Booking[]> {
-    await delay(300);
-    return this.getStorage<Booking[]>('dahab_bookings', []);
+    await delay();
+    const bookings = getItem<Booking[]>('bookings', []);
+    return bookings.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
   
   async getUserBookings(userId: string): Promise<Booking[]> {
-    const bookings = await this.getBookings();
+    await delay();
+    const bookings = getItem<Booking[]>('bookings', []);
     return bookings.filter(b => b.userId === userId);
   }
 
   async createBooking(booking: Booking): Promise<void> {
-    await delay(800);
-    const bookings = await this.getBookings();
-    this.setStorage('dahab_bookings', [booking, ...bookings]);
+    await delay();
+    const bookings = getItem<Booking[]>('bookings', []);
+    bookings.push(booking);
+    setItem('bookings', bookings);
   }
 
   async updateBookingStatus(bookingId: string, status: BookingStatus): Promise<void> {
-    await delay(400);
-    const bookings = await this.getBookings();
-    const updated = bookings.map(b => b.id === bookingId ? { ...b, status } : b);
-    this.setStorage('dahab_bookings', updated);
-  }
-
-  async toggleSavedEvent(userId: string, eventId: string): Promise<void> {
-    await delay(200);
+    await delay();
+    const bookings = getItem<Booking[]>('bookings', []);
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+      booking.status = status;
+      setItem('bookings', bookings);
+    }
   }
 
   // --- USER MANAGEMENT ---
-  async getUsers(): Promise<User[]> {
-    return this.getStorage<User[]>('dahab_users', []);
+  async toggleSavedEvent(userId: string, eventId: string): Promise<void> {
+    await delay(100);
+    const users = getItem<User[]>('users', []);
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      const saved = user.savedEventIds || [];
+      const isSaved = saved.includes(eventId);
+      user.savedEventIds = isSaved ? saved.filter(id => id !== eventId) : [...saved, eventId];
+      setItem('users', users);
+    }
   }
 
   async getUser(userId: string): Promise<User | undefined> {
-    const users = await this.getUsers();
+    await delay(100);
+    const users = getItem<User[]>('users', []);
     return users.find(u => u.id === userId);
   }
 
   async getPendingProviders(): Promise<User[]> {
-    await delay(300);
-    const users = await this.getUsers();
-    return users.filter(u => u.role === UserRole.PROVIDER && u.providerStatus === 'pending');
+    await delay();
+    const users = getItem<User[]>('users', []);
+    return users.filter(u => u.providerStatus === 'pending');
   }
 
   async approveProvider(userId: string): Promise<User | null> {
-    await delay(500);
-    const users = await this.getUsers();
-    let approvedUser: User | null = null;
+    await delay();
+    const users = getItem<User[]>('users', []);
+    const userIndex = users.findIndex(u => u.id === userId);
     
-    const updatedUsers = users.map(u => {
-      if (u.id === userId) {
-        approvedUser = { ...u, providerStatus: 'approved' };
-        return approvedUser;
-      }
-      return u;
-    });
-    this.setStorage('dahab_users', updatedUsers);
-    
-    // Create public ServiceProvider profile
-    if (approvedUser) {
-      const providers = await this.getProviders();
-      // Avoid duplicate entries
+    if (userIndex !== -1) {
+      users[userIndex].providerStatus = 'approved';
+      setItem('users', users);
+
+      // Create provider profile
+      const providers = getItem<ServiceProvider[]>('providers', []);
       if (!providers.find(p => p.id === userId)) {
         const newProvider: ServiceProvider = {
           id: userId,
-          name: (approvedUser as User).name,
-          serviceType: 'Driver', // Default, editable later
+          name: users[userIndex].name,
+          serviceType: 'Driver',
           description: 'Verified service provider',
           phone: '',
           rating: 5.0,
-          imageUrl: 'https://picsum.photos/200/200?random=' + userId,
+          imageUrl: 'https://picsum.photos/200/200', 
           isVerified: true
         };
-        this.setStorage('dahab_providers', [...providers, newProvider]);
+        providers.push(newProvider);
+        setItem('providers', providers);
       }
-    }
-    
-    return approvedUser;
-  }
-  
-  async rejectProvider(userId: string): Promise<void> {
-    await delay(300);
-    const users = await this.getUsers();
-    const updatedUsers = users.map(u => {
-      if (u.id === userId) {
-        return { ...u, role: UserRole.USER, providerStatus: 'rejected' as const };
-      }
-      return u;
-    });
-    this.setStorage('dahab_users', updatedUsers);
-  }
-
-  // --- AUTH ---
-  async sendVerificationCode(email: string): Promise<boolean> {
-    await delay(1000);
-    return true;
-  }
-
-  async verifyAndCreateUser(name: string, email: string, code: string, isProviderSignup: boolean = false): Promise<User | null> {
-    await delay(1000);
-    if (code === '1234') {
-      const isAdmin = name.trim() === 'RahmaOrganizer' || name.trim() === 'Rahma Organizer';
-      
-      const role = isAdmin ? UserRole.ADMIN : isProviderSignup ? UserRole.PROVIDER : UserRole.USER;
-      const providerStatus = isProviderSignup ? 'pending' : undefined;
-
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name,
-        email,
-        role: role,
-        providerStatus: providerStatus,
-        isEmailVerified: true,
-        provider: 'email',
-        savedEventIds: []
-      };
-
-      // Persist user for admin to see
-      const users = await this.getUsers();
-      this.setStorage('dahab_users', [...users, newUser]);
-
-      return newUser;
+      return users[userIndex];
     }
     return null;
   }
-
-  async socialLogin(provider: 'google' | 'facebook'): Promise<User> {
-    await delay(1500); 
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: provider === 'google' ? 'Google User' : 'Facebook User',
-      email: provider === 'google' ? 'user@gmail.com' : 'user@facebook.com',
-      role: UserRole.USER,
-      isEmailVerified: true,
-      provider: provider,
-      savedEventIds: []
-    };
-    // Persist
-    const users = await this.getUsers();
-    this.setStorage('dahab_users', [...users, user]);
-    return user;
+  
+  async rejectProvider(userId: string): Promise<void> {
+    await delay();
+    const users = getItem<User[]>('users', []);
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      users[userIndex].role = UserRole.USER;
+      users[userIndex].providerStatus = 'rejected';
+      setItem('users', users);
+    }
   }
 
-  async login(role: UserRole): Promise<User> {
-    await delay(500);
-    // Return approved demo users
-    return {
-      id: role === UserRole.ADMIN ? 'admin1' : role === UserRole.PROVIDER ? 'p1' : 'user1',
-      name: role === UserRole.ADMIN ? 'Rahma Organizer' : role === UserRole.PROVIDER ? 'Ahmed Taxi' : 'Dahab Explorer',
-      role: role,
-      providerStatus: role === UserRole.PROVIDER ? 'approved' : undefined,
-      email: role === UserRole.ADMIN ? 'admin@dahabhub.com' : 'user@gmail.com',
-      isEmailVerified: true,
-      provider: 'email',
-      savedEventIds: []
-    };
+  async sendVerificationCode(email: string): Promise<boolean> {
+    await delay();
+    return true;
+  }
+
+  async verifyAndCreateUser(name: string, email: string, code: string, isProvider: boolean): Promise<User | null> {
+    // Deprecated
+    return null;
   }
 }
 
-export const db = new MockDatabase();
+export const db = new DatabaseService();
