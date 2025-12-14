@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../services/mockDatabase';
 import { Event } from '../types';
-import { Calendar, MapPin, Clock, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowRight, Sparkles, Car, Briefcase } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 const Home: React.FC = () => {
@@ -208,11 +208,16 @@ const Home: React.FC = () => {
             Are you a local driver or service provider? Join our verified network and grow your business today.
           </p>
         </div>
-        <div className="flex flex-col gap-3 w-full md:w-auto relative z-10">
-          <Link to="/login?role=provider" className="bg-dahab-gold text-black px-8 py-3 rounded-full font-bold hover:bg-yellow-400 transition text-center shadow-lg hover:shadow-yellow-500/20">
-            Register as Driver
-          </Link>
-          <span className="text-xs text-gray-500 text-center">Requires admin verification</span>
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto relative z-10">
+           <div className="flex flex-col gap-2 w-full md:w-auto">
+             <Link to="/login?role=provider" className="bg-dahab-gold text-black px-8 py-3 rounded-full font-bold hover:bg-yellow-400 transition text-center shadow-lg hover:shadow-yellow-500/20 flex items-center justify-center gap-2">
+               <Car size={20} /> Register as Driver
+             </Link>
+             <Link to="/login?role=provider" className="bg-gray-800 text-white border border-gray-700 px-8 py-3 rounded-full font-bold hover:bg-gray-700 transition text-center shadow-lg flex items-center justify-center gap-2">
+               <Briefcase size={20} /> List a Service
+             </Link>
+             <span className="text-xs text-gray-500 text-center mt-1">Requires admin verification</span>
+           </div>
         </div>
       </section>
     </div>

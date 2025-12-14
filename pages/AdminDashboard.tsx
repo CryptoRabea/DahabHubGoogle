@@ -88,13 +88,25 @@ const AdminDashboard: React.FC = () => {
         isFeatured: eventData.isFeatured || false
       } as Event);
     }
+    setEditingEvent(null);
+    setIsEventModalOpen(false);
     await loadData();
   };
 
-  const handleDeleteEvent = async (id: string) => {
+  const handleDeleteEvent = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Stop event propagation
     if (window.confirm("Are you sure you want to delete this event?")) {
-      await db.deleteEvent(id);
-      await loadData(); // Properly await reload to refresh UI
+      // Optimistic update for immediate UI feedback
+      setEvents(prev => prev.filter(ev => ev.id !== id));
+      
+      try {
+        await db.deleteEvent(id);
+        // We can optionally call loadData here, but the optimistic update handles the UI
+      } catch (error) {
+        console.error("Failed to delete event", error);
+        // If it fails, reload data to revert
+        await loadData();
+      }
     }
   };
 
@@ -386,8 +398,9 @@ const AdminDashboard: React.FC = () => {
                         <Edit2 size={16} />
                       </button>
                       <button 
-                        onClick={() => handleDeleteEvent(event.id)}
-                        className="p-1.5 bg-gray-100 text-gray-500 rounded hover:bg-gray-200 hover:text-red-500" title="Delete"
+                        type="button"
+                        onClick={(e) => handleDeleteEvent(event.id, e)}
+                        className="p-1.5 bg-gray-100 text-gray-500 rounded hover:bg-gray-200 hover:text-red-500 transition-colors" title="Delete"
                       >
                         <Trash2 size={16} />
                       </button>
