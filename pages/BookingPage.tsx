@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Upload, Smartphone, ArrowRight, Loader2 } from 'lucide-react';
+import { CheckCircle, Upload, Smartphone, ArrowRight, Loader2, MapPin } from 'lucide-react';
 import { db } from '../services/mockDatabase';
 import { User, Event, ServiceProvider, BookingStatus, PaymentMethod } from '../types';
+import EventMap from '../components/EventMap';
 
 interface BookingPageProps {
   user: User;
@@ -70,6 +71,21 @@ const BookingPage: React.FC<BookingPageProps> = ({ user }) => {
                 <p className="text-gray-500 text-sm">Total: <span className="text-dahab-teal font-bold text-lg">{'price' in item ? item.price : 100} EGP</span></p>
               </div>
             </div>
+
+            {/* Map Preview for Events */}
+            {type === 'event' && 'coordinates' in item && (item as Event).coordinates && (
+              <div className="h-40 w-full rounded-xl overflow-hidden border border-gray-200 relative">
+                <EventMap 
+                  events={[item as Event]} 
+                  center={(item as Event).coordinates} 
+                  zoom={14} 
+                />
+                <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold shadow flex items-center gap-1 z-[400]">
+                  <MapPin size={12} className="text-dahab-teal" />
+                  {(item as Event).location}
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Select Payment Method</label>

@@ -1,20 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Phone, ShieldCheck } from 'lucide-react';
-import { ServiceProvider } from '../types';
+import { ServiceProvider, User } from '../types';
 import { db } from '../services/mockDatabase';
+import ReviewsModal from '../components/ReviewsModal';
 
-const Services: React.FC = () => {
+interface ServicesProps {
+  user: User | null;
+}
+
+const Services: React.FC<ServicesProps> = ({ user }) => {
   const [providers, setProviders] = useState<ServiceProvider[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'Driver' | 'Other'>('all');
   const [loading, setLoading] = useState(true);
 
+  // Reviews Modal State
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedProviderForReview, setSelectedProviderForReview] = useState<{id: string, title: string} | null>(null);
+
   useEffect(() => {
-    db.getProviders().then(data => {
-      setProviders(data);
-      setLoading(false);
-    });
+    // Poll data to check for rating updates
+    const fetchProviders = () => {
+      db.getProviders().then(data => {
+        setProviders(data);
+        setLoading(false);
+      });
+    };
+    
+    fetchProviders();
+    // In a real app with real-time DB, this wouldn't be needed, 
+    // but here we want to see rating updates after modal closes.
+    const interval = setInterval(fetchProviders, 5000);
+    return () => clearInterval(interval);
   }, []);
+
+  const openReviews = (provider: ServiceProvider) => {
+    setSelectedProviderForReview({ id: provider.id, title: provider.name });
+    setReviewModalOpen(true);
+  };
 
   const filteredProviders = activeTab === 'all' 
     ? providers 
@@ -68,10 +91,13 @@ const Services: React.FC = () => {
                     <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-xs uppercase">{provider.serviceType}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 bg-yellow-50 text-yellow-600 px-2 py-1 rounded-lg text-sm font-bold">
+                <button 
+                  onClick={() => openReviews(provider)}
+                  className="flex items-center gap-1 bg-yellow-50 text-yellow-600 px-2 py-1 rounded-lg text-sm font-bold hover:bg-yellow-100 transition"
+                >
                   <Star size={14} fill="currentColor" />
                   {provider.rating}
-                </div>
+                </button>
               </div>
               
               <p className="text-gray-600 text-sm line-clamp-2">{provider.description}</p>
@@ -91,6 +117,15 @@ const Services: React.FC = () => {
           ))}
         </div>
       )}
+      
+      {/* Reviews Modal */}
+      <ReviewsModal 
+        isOpen={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        itemId={selectedProviderForReview?.id || null}
+        itemTitle={selectedProviderForReview?.title || ''}
+        user={user}
+      />
     </div>
   );
 };

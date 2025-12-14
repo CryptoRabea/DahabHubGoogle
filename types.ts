@@ -22,6 +22,37 @@ export interface User {
   email: string;
   isEmailVerified?: boolean;
   provider?: 'email' | 'google' | 'facebook';
+  savedEventIds: string[];
+}
+
+export interface Review {
+  id: string;
+  itemId: string; // Event ID or Service ID
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  timestamp: string;
+}
+
+export interface Comment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  timestamp: string;
+}
+
+export interface Post {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorRole: UserRole;
+  content: string;
+  imageUrl?: string; // Base64 or URL
+  likes: string[]; // Array of User IDs who liked
+  comments: Comment[];
+  timestamp: string;
 }
 
 export interface Event {
@@ -31,6 +62,10 @@ export interface Event {
   date: string;
   time: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   price: number;
   imageUrl: string;
   organizerId: string;

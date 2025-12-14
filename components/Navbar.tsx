@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Car, User, LayoutDashboard, LogOut } from 'lucide-react';
+import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users } from 'lucide-react';
 import { UserRole } from '../types';
 
 interface NavbarProps {
@@ -24,9 +24,9 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
         <Calendar size={24} />
         <span className="text-xs">Events</span>
       </Link>
-      <Link to="/services" className={`flex flex-col items-center gap-1 ${isActive('/services')}`}>
-        <Car size={24} />
-        <span className="text-xs">Services</span>
+      <Link to="/community" className={`flex flex-col items-center gap-1 ${isActive('/community')}`}>
+        <Users size={24} />
+        <span className="text-xs">Community</span>
       </Link>
       {userRole === UserRole.ADMIN ? (
         <Link to="/admin" className={`flex flex-col items-center gap-1 ${isActive('/admin')}`}>
@@ -34,7 +34,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
           <span className="text-xs">Admin</span>
         </Link>
       ) : (
-        <Link to="/login" className={`flex flex-col items-center gap-1 ${isActive('/login')}`}>
+        <Link to={userRole ? "/profile" : "/login"} className={`flex flex-col items-center gap-1 ${isActive(userRole ? '/profile' : '/login')}`}>
           <User size={24} />
           <span className="text-xs">{userRole ? 'Profile' : 'Login'}</span>
         </Link>
@@ -52,6 +52,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
       <div className="flex gap-8 items-center">
         <Link to="/" className={`text-sm font-medium transition-colors ${isActive('/')}`}>Home</Link>
         <Link to="/events" className={`text-sm font-medium transition-colors ${isActive('/events')}`}>Events</Link>
+        <Link to="/community" className={`text-sm font-medium transition-colors ${isActive('/community')}`}>Community Hub</Link>
         <Link to="/services" className={`text-sm font-medium transition-colors ${isActive('/services')}`}>Drivers & Services</Link>
         {userRole === UserRole.ADMIN && (
           <Link to="/admin" className={`text-sm font-medium transition-colors ${isActive('/admin')}`}>Admin Dashboard</Link>
@@ -60,9 +61,14 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
 
       <div className="flex gap-4">
         {userRole ? (
-          <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium">
-            <LogOut size={18} /> Logout
-          </button>
+          <>
+             <Link to="/profile" className={`flex items-center gap-2 font-medium ${isActive('/profile')}`}>
+               <User size={18} /> Profile
+             </Link>
+            <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium ml-4">
+              <LogOut size={18} /> Logout
+            </button>
+          </>
         ) : (
           <Link to="/login" className="bg-dahab-teal text-white px-5 py-2 rounded-full hover:bg-teal-700 transition shadow-md">
             Login

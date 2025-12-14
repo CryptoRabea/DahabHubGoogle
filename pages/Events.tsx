@@ -1,16 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Search, X, CalendarPlus } from 'lucide-react';
-import { Event } from '../types';
+import { Calendar, MapPin, Clock, Search, X, CalendarPlus, Heart, MessageSquare, Map as MapIcon, List } from 'lucide-react';
+import { Event, User } from '../types';
 import { db } from '../services/mockDatabase';
+import ReviewsModal from '../components/ReviewsModal';
+import EventMap from '../components/EventMap';
 
 const CATEGORIES = ['All', 'Party', 'Hike', 'Diving', 'Wellness', 'Workshop'];
 
-const Events: React.FC = () => {
+interface EventsProps {
+  user: User | null;
+  onToggleSave: (id: string) => void;
+}
+
+const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  
+  // Reviews Modal State
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedEventForReview, setSelectedEventForReview] = useState<{id: string, title: string} | null>(null);
 
   useEffect(() => {
     db.getEvents().then(data => {
@@ -18,6 +30,12 @@ const Events: React.FC = () => {
       setLoading(false);
     });
   }, []);
+
+  const openReviews = (e: React.MouseEvent, event: Event) => {
+    e.preventDefault(); // Prevent linking if inside a link, though here button is separate
+    setSelectedEventForReview({ id: event.id, title: event.title });
+    setReviewModalOpen(true);
+  };
 
   const addToGoogleCalendar = (event: Event) => {
     // Parse date: 2024-06-15
@@ -51,11 +69,27 @@ const Events: React.FC = () => {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 h-full flex flex-col">
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Upcoming Events</h1>
-          <p className="text-gray-500">Discover what's happening in town</p>
+        <div className="flex justify-between items-end">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Upcoming Events</h1>
+            <p className="text-gray-500">Discover what's happening in town</p>
+          </div>
+          <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
+             <button 
+               onClick={() => setViewMode('list')}
+               className={`p-2 rounded-lg transition ${viewMode === 'list' ? 'bg-dahab-teal text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+             >
+               <List size={20} />
+             </button>
+             <button 
+               onClick={() => setViewMode('map')}
+               className={`p-2 rounded-lg transition ${viewMode === 'map' ? 'bg-dahab-teal text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+             >
+               <MapIcon size={20} />
+             </button>
+          </div>
         </div>
         
         {/* Search and Filter Section */}
@@ -114,60 +148,94 @@ const Events: React.FC = () => {
                 Clear Filters
             </button>
         </div>
+      ) : viewMode === 'map' ? (
+        <div className="h-[600px] bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden relative">
+           <EventMap events={filteredEvents} />
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
-            <div key={event.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition duration-300 group flex flex-col h-full">
-              <div className="relative h-48 overflow-hidden">
-                <img 
-                  src={event.imageUrl} 
-                  alt={event.title} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
-                />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-gray-800 shadow-sm">
-                  {event.category}
+          {filteredEvents.map((event) => {
+             const isSaved = user?.savedEventIds?.includes(event.id);
+             return (
+              <div key={event.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition duration-300 group flex flex-col h-full relative">
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={event.imageUrl} 
+                    alt={event.title} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                  />
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <button
+                      onClick={() => onToggleSave(event.id)}
+                      className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition"
+                    >
+                      <Heart 
+                        size={18} 
+                        className={`transition-colors ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} 
+                      />
+                    </button>
+                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-gray-800 shadow-sm flex items-center">
+                      {event.category}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6 flex-1 flex flex-col">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 line-clamp-2">{event.title}</h3>
+                    <span className="text-dahab-teal font-bold whitespace-nowrap ml-2">{event.price} EGP</span>
+                  </div>
+                  <div className="space-y-3 mb-6 flex-1">
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <Calendar size={16} className="text-dahab-gold" />
+                      <span>{event.date}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <Clock size={16} className="text-dahab-gold" />
+                      <span>{event.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <MapPin size={16} className="text-dahab-gold" />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3 mt-auto pt-4 border-t border-gray-100">
+                    <button 
+                      onClick={(e) => openReviews(e, event)}
+                      className="p-3 rounded-xl border-2 border-gray-100 text-gray-500 hover:border-dahab-teal hover:text-dahab-teal hover:bg-teal-50 transition flex items-center justify-center"
+                      title="See Reviews"
+                    >
+                      <MessageSquare size={20} />
+                    </button>
+                    <button 
+                      onClick={() => addToGoogleCalendar(event)}
+                      className="p-3 rounded-xl border-2 border-gray-100 text-gray-500 hover:border-dahab-teal hover:text-dahab-teal hover:bg-teal-50 transition flex items-center justify-center"
+                      title="Add to Google Calendar"
+                    >
+                      <CalendarPlus size={20} />
+                    </button>
+                    <Link 
+                      to={`/book/event/${event.id}`}
+                      className="flex-1 flex items-center justify-center bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-dahab-teal transition shadow-lg shadow-gray-200"
+                    >
+                      Book Now
+                    </Link>
+                  </div>
                 </div>
               </div>
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xl font-bold text-gray-900 line-clamp-2">{event.title}</h3>
-                  <span className="text-dahab-teal font-bold whitespace-nowrap ml-2">{event.price} EGP</span>
-                </div>
-                <div className="space-y-3 mb-6 flex-1">
-                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <Calendar size={16} className="text-dahab-gold" />
-                    <span>{event.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <Clock size={16} className="text-dahab-gold" />
-                    <span>{event.time}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <MapPin size={16} className="text-dahab-gold" />
-                    <span className="truncate">{event.location}</span>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 mt-auto pt-4 border-t border-gray-100">
-                  <button 
-                    onClick={() => addToGoogleCalendar(event)}
-                    className="p-3 rounded-xl border-2 border-gray-100 text-gray-500 hover:border-dahab-teal hover:text-dahab-teal hover:bg-teal-50 transition flex items-center justify-center"
-                    title="Add to Google Calendar"
-                  >
-                    <CalendarPlus size={20} />
-                  </button>
-                  <Link 
-                    to={`/book/event/${event.id}`}
-                    className="flex-1 flex items-center justify-center bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-dahab-teal transition shadow-lg shadow-gray-200"
-                  >
-                    Book Now
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      {/* Reviews Modal */}
+      <ReviewsModal 
+        isOpen={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        itemId={selectedEventForReview?.id || null}
+        itemTitle={selectedEventForReview?.title || ''}
+        user={user}
+      />
     </div>
   );
 };

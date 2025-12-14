@@ -61,7 +61,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const user = await db.verifyAndCreateUser(formData.name, formData.email, formData.code);
       if (user) {
         onLogin(user);
-        navigate('/');
+        navigate(user.role === UserRole.ADMIN ? '/admin' : '/');
       } else {
         setError('Invalid verification code. Try "1234"');
         setLoading(false);
@@ -72,6 +72,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setLoading(true);
       // Simulate login check
       await new Promise(r => setTimeout(r, 1000));
+      
+      // Special logic: Login as Admin if identifier is "RahmaOrganizer"
+      if (formData.email === 'RahmaOrganizer' || formData.email === 'Rahma Organizer') {
+         const user = await db.login(UserRole.ADMIN);
+         onLogin(user);
+         navigate('/admin');
+         return;
+      }
+
       // For demo purposes, we log them in as a generic user if fields are filled
       if (formData.email && formData.password) {
         const user = await db.login(UserRole.USER);
@@ -167,7 +176,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   <input
-                    type="email"
+                    type="text" 
                     placeholder="Email Address"
                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-dahab-teal/50 transition"
                     value={formData.email}
@@ -257,10 +266,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="mt-8 text-center space-y-2">
         <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Demo Access</p>
         <div className="flex gap-4 text-sm justify-center">
-          <button onClick={() => handleDemoLogin(UserRole.ADMIN)} className="text-dahab-teal hover:underline">
-            Admin Demo
-          </button>
-          <span className="text-gray-300">|</span>
+          {/* Admin Demo Hidden as requested */}
           <button onClick={() => handleDemoLogin(UserRole.PROVIDER)} className="text-dahab-teal hover:underline">
             Driver Demo
           </button>

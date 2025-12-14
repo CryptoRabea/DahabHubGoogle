@@ -7,6 +7,8 @@ import Services from './pages/Services';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import BookingPage from './pages/BookingPage';
+import Profile from './pages/Profile';
+import SocialHub from './pages/SocialHub';
 import AIChat from './components/AIChat';
 import { User, UserRole } from './types';
 import { db } from './services/mockDatabase';
@@ -32,6 +34,26 @@ const App: React.FC = () => {
     localStorage.removeItem('dahab_user');
   };
 
+  const handleToggleSave = async (eventId: string) => {
+    if (!user) {
+      // You might want to trigger a redirect to login here or show a toast
+      alert("Please login to save events.");
+      return;
+    }
+    
+    // Optimistic update
+    const isSaved = user.savedEventIds?.includes(eventId);
+    const newSavedIds = isSaved 
+      ? user.savedEventIds.filter(id => id !== eventId)
+      : [...(user.savedEventIds || []), eventId];
+      
+    const updatedUser = { ...user, savedEventIds: newSavedIds };
+    setUser(updatedUser);
+    localStorage.setItem('dahab_user', JSON.stringify(updatedUser));
+    
+    await db.toggleSavedEvent(user.id, eventId);
+  };
+
   return (
     <HashRouter>
       <div className="min-h-screen bg-slate-50 pb-20 md:pb-0 md:pt-20 text-gray-800">
@@ -40,10 +62,14 @@ const App: React.FC = () => {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/services" element={<Services />} />
+            <Route path="/events" element={<Events user={user} onToggleSave={handleToggleSave} />} />
+            <Route path="/services" element={<Services user={user} />} />
+            <Route path="/community" element={<SocialHub user={user} />} />
+            
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/book/:type/:id" element={user ? <BookingPage user={user} /> : <Navigate to="/login" />} />
+            
+            <Route path="/profile" element={user ? <Profile user={user} onToggleSave={handleToggleSave} /> : <Navigate to="/login" />} />
             
             {/* Admin Route Protection */}
             <Route 

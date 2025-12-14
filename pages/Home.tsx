@@ -1,20 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { db } from '../services/mockDatabase';
+import { Event } from '../types';
+import { Calendar, MapPin, Clock, ArrowRight, Sparkles } from 'lucide-react';
 
 const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop", // Red Sea Reef (Existing - Good)
-  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop", // Replacement: Clear Beach/Sea
-  "https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=1920&auto=format&fit=crop", // Replacement: Desert Mountains
-  "https://images.unsplash.com/photo-1539768942893-daf53e448371?q=80&w=1920&auto=format&fit=crop", // Palms & Beach (Existing - Good)
+  "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop", // Red Sea Reef
+  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop", // Clear Beach/Sea
+  "https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=1920&auto=format&fit=crop", // Desert Mountains
+  "https://images.unsplash.com/photo-1539768942893-daf53e448371?q=80&w=1920&auto=format&fit=crop", // Palms & Beach
 ];
 
 const Home: React.FC = () => {
   const [currentImage, setCurrentImage] = useState(0);
+  const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Slideshow Timer
     const timer = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % HERO_IMAGES.length);
     }, 5000);
+
+    // Fetch Featured Events
+    const fetchData = async () => {
+      const data = await db.getEvents();
+      setFeaturedEvents(data.slice(0, 3)); // Display top 3 events
+      setLoading(false);
+    };
+    fetchData();
+
     return () => clearInterval(timer);
   }, []);
 
@@ -36,7 +51,6 @@ const Home: React.FC = () => {
                 alt={`Dahab scenery ${index + 1}`} 
                 className="w-full h-full object-cover"
               />
-              {/* Individual Image Overlay for better contrast/pop if needed */}
               <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
             </div>
           ))}
@@ -92,6 +106,79 @@ const Home: React.FC = () => {
             </Link>
           ))}
         </div>
+      </section>
+
+      {/* Featured Events Section */}
+      <section>
+        <div className="flex justify-between items-end mb-6">
+          <div>
+             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+               <Sparkles className="text-dahab-gold" fill="currentColor" size={24} />
+               Featured Events
+             </h2>
+             <p className="text-gray-500 text-sm mt-1">Don't miss out on these popular activities</p>
+          </div>
+          <Link to="/events" className="text-dahab-teal font-bold flex items-center gap-1 hover:underline text-sm bg-teal-50 px-3 py-1 rounded-full">
+            View All <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {loading ? (
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {[1,2,3].map(i => (
+               <div key={i} className="h-80 bg-gray-100 rounded-2xl animate-pulse"></div>
+             ))}
+           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredEvents.map(event => (
+              <Link key={event.id} to={`/book/event/${event.id}`} className="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition border border-gray-100 h-full flex flex-col">
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={event.imageUrl} 
+                    alt={event.title} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                  />
+                  <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black/50 to-transparent opacity-60"></div>
+                  
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-gray-800 shadow-sm border border-white/20">
+                    {event.category}
+                  </div>
+                  <div className="absolute bottom-4 right-4 bg-dahab-teal/90 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-bold shadow-lg border border-white/20">
+                    {event.price} EGP
+                  </div>
+                </div>
+                <div className="p-5 flex-1 flex flex-col">
+                  <h3 className="font-bold text-xl text-gray-900 mb-3 line-clamp-1 group-hover:text-dahab-teal transition-colors">{event.title}</h3>
+                  <div className="space-y-3 text-sm text-gray-500 mb-4 flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+                        <Calendar size={16} />
+                      </div>
+                      <span>{event.date}</span>
+                    </div>
+                     <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                        <Clock size={16} />
+                      </div>
+                      <span>{event.time}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+                         <MapPin size={16} />
+                      </div>
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-gray-100 mt-auto flex items-center justify-between text-dahab-teal font-bold group-hover:translate-x-1 transition-transform">
+                    <span>Book Now</span>
+                    <ArrowRight size={18} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Drive with Us Banner */}
