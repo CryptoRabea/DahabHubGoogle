@@ -57,7 +57,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
 
   // Top Nav for Desktop
   const DesktopNav = () => (
-    <div className="hidden md:flex fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50 px-8 py-4 justify-between items-center">
+    <div className="hidden md:flex fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50 px-8 py-4 justify-between items-center pt-safe">
       <Link to="/" className="text-2xl font-bold text-dahab-teal tracking-tight flex items-center gap-3">
         {settings.logoUrl ? (
           <img src={settings.logoUrl} alt={settings.appName} className="h-10 w-auto object-contain" />

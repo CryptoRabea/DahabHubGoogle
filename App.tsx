@@ -77,7 +77,7 @@ const AppContent: React.FC = () => {
   return (
     <HashRouter>
       <div 
-        className="min-h-screen pb-20 md:pb-0 md:pt-20 text-gray-800 transition-all duration-500 ease-in-out"
+        className="min-h-screen pb-20 md:pb-0 md:pt-20 pt-safe text-gray-800 transition-all duration-500 ease-in-out"
         style={{
           backgroundImage: settings.backgroundStyle,
           backgroundAttachment: 'fixed',
