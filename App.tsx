@@ -154,14 +154,14 @@ const AppContent: React.FC = () => {
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/book/:type/:id" element={user ? <BookingPage user={user} /> : <Navigate to="/login" />} />
             
-            <Route path="/profile" element={user ? <Profile user={user} onToggleSave={handleToggleSave} /> : <Navigate to="/login" />} />
+            <Route path="/profile" element={user ? <Profile user={user} onToggleSave={handleToggleSave} onLogout={handleLogout} /> : <Navigate to="/login" />} />
             
             {/* Provider Dashboard Route */}
             <Route 
               path="/provider-dashboard" 
               element={
                 user?.role === UserRole.PROVIDER 
-                  ? <ProviderDashboard /> 
+                  ? <ProviderDashboard onLogout={handleLogout} /> 
                   : <Navigate to="/login" />
               } 
             />
@@ -171,7 +171,7 @@ const AppContent: React.FC = () => {
               path="/admin" 
               element={
                 user?.role === UserRole.ADMIN 
-                  ? <AdminDashboard /> 
+                  ? <AdminDashboard onLogout={handleLogout} /> 
                   : <Navigate to="/login" />
               } 
             />

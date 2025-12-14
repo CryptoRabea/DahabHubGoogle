@@ -54,6 +54,8 @@ const BookingPage: React.FC<BookingPageProps> = ({ user }) => {
 
   if (!item) return <div className="p-8 text-center">Item not found</div>;
 
+  const itemName = 'title' in item ? item.title : item.name;
+
   return (
     <div className="max-w-xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden min-h-[500px]">
       <div className="bg-dahab-teal p-6 text-white text-center">
@@ -65,9 +67,9 @@ const BookingPage: React.FC<BookingPageProps> = ({ user }) => {
         {step === 1 && (
           <div className="space-y-6 animate-fade-in">
             <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
-              <img src={item.imageUrl} alt={item.name || (item as Event).title} className="w-16 h-16 rounded-lg object-cover" />
+              <img src={item.imageUrl} alt={itemName} className="w-16 h-16 rounded-lg object-cover" />
               <div>
-                <h3 className="font-bold">{item.name || (item as Event).title}</h3>
+                <h3 className="font-bold">{itemName}</h3>
                 <p className="text-gray-500 text-sm">Total: <span className="text-dahab-teal font-bold text-lg">{'price' in item ? item.price : 100} EGP</span></p>
               </div>
             </div>

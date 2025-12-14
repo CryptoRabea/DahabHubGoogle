@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users, Menu, Briefcase, Download } from 'lucide-react';
+import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users, Menu, Briefcase, Download, ShieldCheck } from 'lucide-react';
 import { UserRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -18,7 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
 
   const isActive = (path: string) => location.pathname === path ? "text-dahab-teal font-bold" : "text-gray-500 hover:text-dahab-teal";
 
-  // Brand Logo Logic: Show image if available and not broken, otherwise show text
+  // Brand Logo Logic
   const BrandLogo = ({ className = "h-10" }: { className?: string }) => {
     if (settings.logoUrl && !logoError) {
       return (
@@ -37,65 +37,87 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
     );
   };
 
-  // Mobile Top Bar (Logo + Auth Buttons)
+  // Mobile Top Bar
   const MobileTopBar = () => (
-    <div className="md:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 px-4 py-3 flex justify-between items-center pt-safe">
+    <div className="md:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 px-4 py-3 flex justify-between items-center pt-safe transition-all">
        <Link to="/" className="flex items-center gap-2">
           <BrandLogo className="h-8" />
        </Link>
        
-       {!userRole && (
-         <div className="flex gap-2">
-           <Link to="/login" className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-full hover:bg-gray-50">Login</Link>
-           <Link to="/login?mode=signup" className="px-3 py-1.5 text-xs font-bold bg-dahab-teal text-white rounded-full hover:bg-teal-700 shadow-sm">Sign Up</Link>
-         </div>
-       )}
+       <div className="flex items-center gap-2">
+         {/* Install Button */}
+         {installPrompt && (
+            <button onClick={onInstall} className="text-gray-900 bg-gray-100 p-2 rounded-full mr-1">
+              <Download size={16} />
+            </button>
+         )}
 
-       {installPrompt && (
-          <button onClick={onInstall} className="text-gray-900 bg-gray-100 p-2 rounded-full">
-            <Download size={16} />
-          </button>
-       )}
+         {/* Auth Actions */}
+         {!userRole ? (
+           <div className="flex gap-2">
+             <Link to="/login" className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-full hover:bg-gray-50">Login</Link>
+             <Link to="/login?mode=signup" className="px-3 py-1.5 text-xs font-bold bg-dahab-teal text-white rounded-full hover:bg-teal-700 shadow-sm">Sign Up</Link>
+           </div>
+         ) : (
+           <div className="flex gap-2 items-center">
+             <Link to="/profile" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-dahab-teal border border-gray-200">
+               <User size={16} />
+             </Link>
+             <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition">
+               <LogOut size={20} />
+             </button>
+           </div>
+         )}
+       </div>
     </div>
   );
 
-  // Bottom Nav for Mobile
+  // Bottom Nav for Mobile - Standardized Layout
   const MobileBottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 py-3 px-6 flex justify-between items-center z-50 md:hidden pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 py-3 px-6 flex justify-between items-center z-50 md:hidden pb-safe transition-all">
       <Link to="/" className={`flex flex-col items-center gap-1 ${isActive('/')}`}>
         <Home size={24} />
         <span className="text-[10px] font-medium">Home</span>
       </Link>
+      
       <Link to="/events" className={`flex flex-col items-center gap-1 ${isActive('/events')}`}>
         <Calendar size={24} />
         <span className="text-[10px] font-medium">Events</span>
       </Link>
       
-      {userRole === UserRole.PROVIDER && (
-        <Link to="/provider-dashboard" className={`flex flex-col items-center gap-1 ${isActive('/provider-dashboard')}`}>
-          <Briefcase size={24} />
-          <span className="text-[10px] font-medium">Dash</span>
-        </Link>
-      )}
+      <Link to="/services" className={`flex flex-col items-center gap-1 ${isActive('/services')}`}>
+        <Car size={24} />
+        <span className="text-[10px] font-medium">Services</span>
+      </Link>
 
-      {userRole === UserRole.ADMIN ? (
-        <Link to="/admin" className={`flex flex-col items-center gap-1 ${isActive('/admin')}`}>
-          <LayoutDashboard size={24} />
-          <span className="text-[10px] font-medium">Admin</span>
-        </Link>
-      ) : (
-        <Link to={userRole ? "/profile" : "/login"} className={`flex flex-col items-center gap-1 ${isActive(userRole ? '/profile' : '/login')}`}>
-          <User size={24} />
-          <span className="text-[10px] font-medium">{userRole ? 'Profile' : 'Login'}</span>
-        </Link>
-      )}
+      {/* Dynamic Profile/Dashboard Tab */}
+      <Link 
+        to={
+          userRole === UserRole.ADMIN ? "/admin" : 
+          userRole === UserRole.PROVIDER ? "/provider-dashboard" : 
+          userRole ? "/profile" : "/login"
+        } 
+        className={`flex flex-col items-center gap-1 ${isActive(
+          userRole === UserRole.ADMIN ? "/admin" : 
+          userRole === UserRole.PROVIDER ? "/provider-dashboard" : 
+          userRole ? "/profile" : "/login"
+        )}`}
+      >
+        {userRole === UserRole.ADMIN ? <ShieldCheck size={24} /> :
+         userRole === UserRole.PROVIDER ? <Briefcase size={24} /> :
+         <User size={24} />
+        }
+        <span className="text-[10px] font-medium">
+          {userRole === UserRole.ADMIN ? 'Admin' : 
+           userRole === UserRole.PROVIDER ? 'Dash' : 
+           userRole ? 'Profile' : 'Login'}
+        </span>
+      </Link>
       
-      {userRole !== UserRole.PROVIDER && userRole !== UserRole.ADMIN && (
-        <Link to="/more" className={`flex flex-col items-center gap-1 ${isActive('/more')}`}>
-          <Menu size={24} />
-          <span className="text-[10px] font-medium">More</span>
-        </Link>
-      )}
+      <Link to="/more" className={`flex flex-col items-center gap-1 ${isActive('/more')}`}>
+        <Menu size={24} />
+        <span className="text-[10px] font-medium">More</span>
+      </Link>
     </div>
   );
 

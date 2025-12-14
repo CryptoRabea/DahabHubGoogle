@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { User, Event, UserRole, Booking } from '../types';
 import { db } from '../services/mockDatabase';
-import { Plus, Clock, CheckCircle, XCircle, Calendar, MapPin, Edit2, Trash2, Eye, BarChart3, Users, DollarSign, ShieldAlert } from 'lucide-react';
+import { Plus, Clock, CheckCircle, XCircle, Calendar, MapPin, Edit2, Trash2, Eye, BarChart3, Users, DollarSign, ShieldAlert, LogOut } from 'lucide-react';
 import EventFormModal from '../components/EventFormModal';
 import { useNavigate } from 'react-router-dom';
 
-const ProviderDashboard: React.FC = () => {
+interface ProviderDashboardProps {
+  onLogout: () => void;
+}
+
+const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onLogout }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [myEvents, setMyEvents] = useState<Event[]>([]);
@@ -90,13 +94,19 @@ const ProviderDashboard: React.FC = () => {
     <div className="space-y-8 pb-20">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-           <h1 className="text-3xl font-bold text-gray-900">Provider Dashboard</h1>
-           <p className="text-gray-500">Manage your events and view your stats.</p>
+        <div className="flex items-center justify-between w-full md:w-auto">
+           <div>
+              <h1 className="text-3xl font-bold text-gray-900">Provider Dashboard</h1>
+              <p className="text-gray-500">Manage your events and view your stats.</p>
+           </div>
+           <button onClick={onLogout} className="md:hidden p-2 text-red-500 bg-red-50 rounded-full">
+             <LogOut size={20} />
+           </button>
         </div>
+        
         <button 
           onClick={() => handleOpenEventModal()}
-          className="bg-dahab-teal text-white px-6 py-3 rounded-xl font-bold hover:bg-teal-700 flex items-center gap-2 shadow-lg hover:shadow-dahab-teal/50 transition"
+          className="bg-dahab-teal text-white px-6 py-3 rounded-xl font-bold hover:bg-teal-700 flex items-center gap-2 shadow-lg hover:shadow-dahab-teal/50 transition w-full md:w-auto justify-center"
         >
           <Plus size={20} /> Create Event
         </button>

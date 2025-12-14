@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../services/mockDatabase';
 import { Booking, BookingStatus, Event, User, UserRole } from '../types';
-import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star } from 'lucide-react';
+import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star, LogOut } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import EventFormModal from '../components/EventFormModal';
 
@@ -13,7 +13,11 @@ const PRESET_BACKGROUNDS = [
   { name: 'Sunset Glow', value: 'linear-gradient(120deg, #f6d365 0%, #fda085 100%)' }
 ];
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  onLogout: () => void;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [pendingProviders, setPendingProviders] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -141,8 +145,14 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+        <div className="flex items-center gap-3 w-full justify-between md:justify-start">
+           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+           <button onClick={onLogout} className="md:hidden p-2 text-red-500 bg-red-50 rounded-full">
+             <LogOut size={20} />
+           </button>
+        </div>
+        
+        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
           <button 
             onClick={() => setActiveTab('bookings')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'bookings' ? 'bg-dahab-teal text-white' : 'bg-white text-gray-700'}`}

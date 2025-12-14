@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { User, Event, Booking } from '../types';
 import { db } from '../services/mockDatabase';
-import { Mail, Shield, User as UserIcon, Calendar, MapPin, Heart } from 'lucide-react';
+import { Mail, Shield, User as UserIcon, Calendar, MapPin, Heart, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ProfileProps {
   user: User;
   onToggleSave: (id: string) => void;
+  onLogout: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ user, onToggleSave }) => {
+const Profile: React.FC<ProfileProps> = ({ user, onToggleSave, onLogout }) => {
   const [savedEvents, setSavedEvents] = useState<Event[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [activeTab, setActiveTab] = useState<'saved' | 'bookings'>('saved');
@@ -37,13 +38,20 @@ const Profile: React.FC<ProfileProps> = ({ user, onToggleSave }) => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-20">
       {/* Profile Header */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-dahab-teal to-blue-500"></div>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
+        <div className="h-32 bg-gradient-to-r from-dahab-teal to-blue-500">
+           <button 
+             onClick={onLogout}
+             className="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-white/30 transition shadow-lg"
+           >
+             <LogOut size={16} /> Logout
+           </button>
+        </div>
         <div className="px-8 pb-8">
           <div className="flex flex-col md:flex-row items-start md:items-end -mt-12 gap-6">
-            <div className="w-24 h-24 rounded-full bg-white p-1 shadow-lg">
+            <div className="w-24 h-24 rounded-full bg-white p-1 shadow-lg z-10">
               <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
                 <UserIcon size={40} className="text-gray-400" />
               </div>
@@ -145,7 +153,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onToggleSave }) => {
                   <div className="text-center py-12 text-gray-500">No bookings found.</div>
                ) : (
                  <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-sm text-gray-900">
                     <thead className="bg-gray-50 text-gray-500 uppercase">
                       <tr>
                         <th className="p-4">Item</th>
