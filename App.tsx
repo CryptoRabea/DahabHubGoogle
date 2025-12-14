@@ -12,6 +12,7 @@ import SocialHub from './pages/SocialHub';
 import More from './pages/More';
 import ProviderDashboard from './pages/ProviderDashboard';
 import AIChat from './components/AIChat';
+import IOSInstallPrompt from './components/IOSInstallPrompt';
 import { User, UserRole } from './types';
 import { db } from './services/mockDatabase';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
@@ -30,7 +31,7 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
-  // Handle PWA Install Prompt
+  // Handle PWA Install Prompt (Android/Desktop)
   useEffect(() => {
     const handler = (e: any) => {
       // Prevent the mini-infobar from appearing on mobile
@@ -163,6 +164,7 @@ const AppContent: React.FC = () => {
         </main>
 
         <AIChat />
+        <IOSInstallPrompt />
       </div>
     </HashRouter>
   );
