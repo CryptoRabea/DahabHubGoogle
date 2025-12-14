@@ -104,9 +104,14 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
             </button>
           </>
         ) : (
-          <Link to="/login" className="bg-dahab-teal text-white px-5 py-2 rounded-full hover:bg-teal-700 transition shadow-md">
-            Login
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/login" className="text-gray-600 hover:text-dahab-teal px-4 py-2 rounded-full font-bold transition">
+              Login
+            </Link>
+            <Link to="/login?mode=signup" className="bg-dahab-teal text-white px-5 py-2 rounded-full hover:bg-teal-700 transition shadow-md font-bold">
+              Sign Up
+            </Link>
+          </div>
         )}
       </div>
     </div>

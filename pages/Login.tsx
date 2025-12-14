@@ -27,9 +27,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   useEffect(() => {
     const roleParam = searchParams.get('role');
+    const modeParam = searchParams.get('mode');
+
     if (roleParam === 'provider') {
       setMode('signup');
       setIsProviderSignup(true);
+    } else if (modeParam === 'signup') {
+      setMode('signup');
+      setIsProviderSignup(false);
     }
   }, [searchParams]);
 
@@ -106,18 +111,29 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         
         {/* Header Image/Color */}
         <div className="bg-gradient-to-r from-dahab-teal to-blue-500 p-8 text-center text-white">
-          <h1 className="text-3xl font-bold mb-2">
-            {mode === 'login' ? 'Welcome Back' : (isProviderSignup ? 'Become a Partner' : 'Join AmakenDahab')}
-          </h1>
+          <h1 className="text-3xl font-bold mb-2">AmakenDahab</h1>
           <p className="opacity-90 text-sm">
-            {mode === 'login' 
-              ? 'Login to manage your bookings and events' 
-              : (isProviderSignup ? 'List your services and events' : 'Connect with the best of Dahab') 
-            }
+            {isProviderSignup ? 'Become a Partner' : 'Your Gateway to Dahab'}
           </p>
         </div>
 
         <div className="p-8">
+          {/* Tabs for Login / Signup */}
+          <div className="flex p-1 bg-gray-100 rounded-xl mb-6">
+            <button 
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${mode === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => { setMode('login'); setError(''); }}
+            >
+              Sign In
+            </button>
+            <button 
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${mode === 'signup' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => { setMode('signup'); setError(''); }}
+            >
+              Sign Up
+            </button>
+          </div>
+
           {/* Social Login Buttons */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <button 
@@ -155,7 +171,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           {/* Email Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
-              <div className="relative">
+              <div className="relative animate-fade-in">
                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
@@ -194,7 +210,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
 
             {mode === 'signup' && (
-              <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition ${isProviderSignup ? 'bg-teal-50 border-dahab-teal' : 'border-gray-200 hover:bg-gray-50'}`}>
+              <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition animate-fade-in ${isProviderSignup ? 'bg-teal-50 border-dahab-teal' : 'border-gray-200 hover:bg-gray-50'}`}>
                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${isProviderSignup ? 'bg-dahab-teal border-dahab-teal' : 'border-gray-300'}`}>
                   {isProviderSignup && <Check size={14} className="text-white" />}
                 </div>
@@ -215,7 +231,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
 
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
+              <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm animate-fade-in">
                 <AlertCircle size={16} />
                 {error}
               </div>
@@ -236,25 +252,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               )}
             </button>
           </form>
-
-          {/* Toggle Login/Signup */}
-          <div className="mt-6 text-center text-sm text-gray-500">
-            {mode === 'login' ? (
-              <p>
-                Don't have an account?{' '}
-                <button onClick={() => {setMode('signup'); setError('');}} className="text-dahab-teal font-bold hover:underline">
-                  Create Account
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{' '}
-                <button onClick={() => {setMode('login'); setError('');}} className="text-dahab-teal font-bold hover:underline">
-                  Sign In
-                </button>
-              </p>
-            )}
-          </div>
         </div>
       </div>
     </div>

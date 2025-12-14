@@ -1,13 +1,13 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
 
 // Increment this version to force a data reset on client browsers
-// Updated to 1.4 to support Featured Events
-const DB_VERSION = '1.4'; 
+// Updated to 1.6 for branding name correction
+const DB_VERSION = '1.6'; 
 
 // Default settings if none exist in DB
 const INITIAL_SETTINGS: AppSettings = {
   appName: 'AmakenDahab',
-  logoUrl: '', 
+  logoUrl: '/logo.png', 
   heroImages: [
     "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop"
