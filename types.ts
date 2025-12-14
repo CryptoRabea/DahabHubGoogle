@@ -21,17 +21,20 @@ export interface AppSettings {
   logoUrl: string; // Base64 or URL
   heroImages: string[];
   backgroundStyle: string; // CSS background value
+  contentOverrides: { [key: string]: string }; // Key-Value pair for text/image replacements
 }
 
 export interface User {
   id: string;
   name: string;
   role: UserRole;
-  providerStatus?: 'pending' | 'approved' | 'rejected';
+  // Updated statuses for subscription flow
+  providerStatus?: 'pending' | 'pending_payment' | 'payment_review' | 'approved' | 'rejected';
   email: string;
   isEmailVerified?: boolean;
   provider?: 'email' | 'google' | 'facebook';
   savedEventIds: string[];
+  subscriptionReceipt?: string; // URL/Base64 of payment receipt
 }
 
 export interface Review {

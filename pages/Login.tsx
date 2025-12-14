@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import { db } from '../services/mockDatabase';
 import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -15,6 +16,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
+  const { settings } = useSettings();
   
   // Form State
   const [formData, setFormData] = useState({
@@ -110,8 +112,19 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden text-gray-900">
         
         {/* Header Image/Color */}
-        <div className="bg-gradient-to-r from-dahab-teal to-blue-500 p-8 text-center text-white">
-          <h1 className="text-3xl font-bold mb-2">AmakenDahab</h1>
+        <div className="bg-gradient-to-r from-dahab-teal to-blue-500 p-8 text-center text-white flex flex-col items-center">
+          {settings.logoUrl && (
+            <img 
+              src={settings.logoUrl} 
+              alt="Logo" 
+              className="w-16 h-16 object-contain mb-3 drop-shadow-md"
+              onError={(e) => {
+                // Hide if error
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          )}
+          <h1 className="text-3xl font-bold mb-2">{settings.appName}</h1>
           <p className="opacity-90 text-sm">
             {isProviderSignup ? 'Become a Partner' : 'Your Gateway to Dahab'}
           </p>

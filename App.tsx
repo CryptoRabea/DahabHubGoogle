@@ -16,11 +16,11 @@ import IOSInstallPrompt from './components/IOSInstallPrompt';
 import { User, UserRole } from './types';
 import { db } from './services/mockDatabase';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Edit3, Eye } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { settings } = useSettings();
+  const { settings, isEditing, toggleEditing } = useSettings();
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   // Detect dark background to switch text color
@@ -63,17 +63,16 @@ const AppContent: React.FC = () => {
   };
 
   // Poll for user status updates (for verification)
-  // Fix: Use specific dependencies to prevent interval reset on unrelated state changes
   useEffect(() => {
     const userId = user?.id;
-    const isPendingProvider = user?.role === UserRole.PROVIDER && user?.providerStatus === 'pending';
+    const isPendingProvider = user?.role === UserRole.PROVIDER && (user?.providerStatus === 'pending' || user?.providerStatus === 'payment_review');
 
     if (userId && isPendingProvider) {
       const interval = setInterval(async () => {
         try {
           const updatedUser = await db.getUser(userId);
           // Only update if status has actually changed to avoid loop
-          if (updatedUser && updatedUser.providerStatus !== 'pending') {
+          if (updatedUser && updatedUser.providerStatus !== user?.providerStatus) {
             setUser(updatedUser);
             localStorage.setItem('dahab_user', JSON.stringify(updatedUser));
           }
@@ -98,7 +97,6 @@ const AppContent: React.FC = () => {
 
   const handleToggleSave = async (eventId: string) => {
     if (!user) {
-      // You might want to trigger a redirect to login here or show a toast
       alert("Please login to save events.");
       return;
     }
@@ -118,7 +116,6 @@ const AppContent: React.FC = () => {
 
   return (
     <HashRouter>
-      {/* Updated padding: pt-20 to ensure content clears both mobile top bar and desktop navbar */}
       <div 
         className={`min-h-screen pb-20 pt-20 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
         style={{
@@ -139,7 +136,7 @@ const AppContent: React.FC = () => {
         {user?.role === UserRole.PROVIDER && user?.providerStatus === 'pending' && (
           <div className="bg-yellow-500 text-white px-4 py-2 text-center text-sm font-bold shadow-md flex items-center justify-center gap-2">
             <ShieldAlert size={16} />
-            <span>Your provider account is pending admin verification. You can browse as a user until approved.</span>
+            <span>Your provider account is pending admin verification.</span>
           </div>
         )}
         
@@ -156,7 +153,6 @@ const AppContent: React.FC = () => {
             
             <Route path="/profile" element={user ? <Profile user={user} onToggleSave={handleToggleSave} onLogout={handleLogout} /> : <Navigate to="/login" />} />
             
-            {/* Provider Dashboard Route */}
             <Route 
               path="/provider-dashboard" 
               element={
@@ -166,7 +162,6 @@ const AppContent: React.FC = () => {
               } 
             />
 
-            {/* Admin Route Protection */}
             <Route 
               path="/admin" 
               element={
@@ -180,6 +175,17 @@ const AppContent: React.FC = () => {
 
         <AIChat />
         <IOSInstallPrompt />
+
+        {/* Admin Edit Mode Toggle */}
+        {user?.role === UserRole.ADMIN && (
+          <button 
+            onClick={toggleEditing}
+            className={`fixed bottom-24 right-4 md:right-10 p-4 rounded-full shadow-xl z-50 transition-all transform hover:scale-105 ${isEditing ? 'bg-orange-500 text-white' : 'bg-gray-900 text-white'}`}
+            title={isEditing ? "Exit Edit Mode" : "Enter Edit Mode"}
+          >
+            {isEditing ? <Eye size={24} /> : <Edit3 size={24} />}
+          </button>
+        )}
       </div>
     </HashRouter>
   );

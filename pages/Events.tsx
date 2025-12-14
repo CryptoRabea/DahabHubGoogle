@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Search, X, CalendarPlus, Heart, MessageSquare, Map as MapIcon, List, Download, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Clock, Search, X, CalendarPlus, Heart, MessageSquare, Map as MapIcon, List, Download, ExternalLink, Star, Plus, Trash2, Edit, Image as ImageIcon } from 'lucide-react';
 import { Event, User } from '../types';
 import { db } from '../services/mockDatabase';
 import ReviewsModal from '../components/ReviewsModal';
 import EventMap from '../components/EventMap';
+import { useSettings } from '../contexts/SettingsContext';
+import EventFormModal from '../components/EventFormModal';
 
 const CATEGORIES = ['All', 'Party', 'Hike', 'Diving', 'Wellness', 'Workshop'];
 
@@ -119,6 +121,7 @@ interface EventsProps {
 }
 
 const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
+  const { isEditing } = useSettings();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,23 +136,80 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedEventForReview, setSelectedEventForReview] = useState<{id: string, title: string} | null>(null);
 
+  // Edit/Create Modal State
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+
   useEffect(() => {
     // Initialize category from URL if present
     const cat = searchParams.get('category');
     if (cat && CATEGORIES.includes(cat)) {
       setSelectedCategory(cat);
     }
+    fetchEvents();
+  }, [searchParams]);
 
+  const fetchEvents = () => {
     db.getPublicEvents().then(data => {
       setEvents(data);
       setLoading(false);
     });
-  }, [searchParams]);
+  };
 
   const openReviews = (e: React.MouseEvent, event: Event) => {
     e.preventDefault(); 
     setSelectedEventForReview({ id: event.id, title: event.title });
     setReviewModalOpen(true);
+  };
+
+  const handleToggleFeatured = async (e: React.MouseEvent, event: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await db.toggleFeaturedEvent(event.id, !event.isFeatured);
+    fetchEvents();
+  };
+
+  const handleCreateEvent = () => {
+    setEditingEvent(null);
+    setIsEventModalOpen(true);
+  };
+
+  const handleEditEvent = (e: React.MouseEvent, event: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingEvent(event);
+    setIsEventModalOpen(true);
+  };
+
+  const handleDeleteEvent = async (e: React.MouseEvent, eventId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if(window.confirm("Delete this event permanently?")) {
+        await db.deleteEvent(eventId);
+        fetchEvents();
+    }
+  };
+
+  const handleEventSubmit = async (data: Partial<Event>) => {
+    if(editingEvent) {
+        await db.updateEvent({ ...editingEvent, ...data } as Event);
+    } else {
+        await db.addEvent({
+             id: Math.random().toString(36).substr(2, 9),
+             title: data.title!,
+             description: data.description!,
+             date: data.date!,
+             time: data.time!,
+             location: data.location!,
+             price: data.price!,
+             imageUrl: data.imageUrl || 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?auto=format&fit=crop&q=80&w=800',
+             category: data.category!,
+             organizerId: user?.id || 'admin',
+             status: 'approved',
+             isFeatured: data.isFeatured || false
+        } as Event);
+    }
+    fetchEvents();
   };
 
   const filteredEvents = events.filter(event => {
@@ -165,13 +225,22 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
   return (
     <div className="space-y-8 h-full flex flex-col">
       <div className="flex flex-col gap-6">
-        <div className="flex justify-between items-end">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
-            {/* Headers inherit global color (white on dark theme, gray-900 on light) */}
-            <h1 className="text-3xl font-bold">Upcoming Events</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">Upcoming Events</h1>
+              {isEditing && (
+                <button 
+                  onClick={handleCreateEvent}
+                  className="border-2 border-dashed border-dahab-teal text-dahab-teal px-4 py-1.5 rounded-xl font-bold flex items-center gap-2 hover:bg-teal-50 transition animate-pulse hover:animate-none"
+                >
+                  <Plus size={20} /> Add Event
+                </button>
+              )}
+            </div>
             <p className="opacity-80">Discover what's happening in town</p>
           </div>
-          <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
+          <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex self-end">
              <button 
                onClick={() => setViewMode('list')}
                className={`p-2 rounded-lg transition ${viewMode === 'list' ? 'bg-dahab-teal text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
@@ -252,27 +321,71 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
           {filteredEvents.map((event) => {
              const isSaved = user?.savedEventIds?.includes(event.id);
              return (
-              <div key={event.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition duration-300 group flex flex-col h-full relative text-gray-900">
+              <div key={event.id} className="relative group/card bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition duration-300 flex flex-col h-full text-gray-900 overflow-hidden">
+                {/* Admin Toggle Featured */}
+                {isEditing && (
+                  <>
+                     <button 
+                      onClick={(e) => handleToggleFeatured(e, event)}
+                      className={`absolute top-4 left-4 z-20 p-2 rounded-full shadow-lg transition transform hover:scale-110 ${event.isFeatured ? 'bg-dahab-gold text-white' : 'bg-gray-200 text-gray-500'}`}
+                      title={event.isFeatured ? "Remove from Featured" : "Add to Featured"}
+                    >
+                      <Star size={20} fill={event.isFeatured ? "currentColor" : "none"} />
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => handleDeleteEvent(e, event.id)}
+                      className="absolute top-4 left-16 z-20 p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition transform hover:scale-110"
+                      title="Delete Event"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </>
+                )}
+
                 <div className="relative h-48 overflow-hidden rounded-t-2xl">
                   <img 
                     src={event.imageUrl} 
                     alt={event.title} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                    className={`w-full h-full object-cover transition duration-700 ${isEditing ? 'opacity-80' : 'group-hover/card:scale-110'}`}
                   />
-                  <div className="absolute top-4 right-4 flex gap-2">
-                    <button
-                      onClick={() => onToggleSave(event.id)}
-                      className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition"
-                    >
-                      <Heart 
-                        size={18} 
-                        className={`transition-colors ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} 
-                      />
-                    </button>
-                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-gray-800 shadow-sm flex items-center">
-                      {event.category}
+                  
+                  {isEditing && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <button 
+                           onClick={(e) => handleEditEvent(e, event)}
+                           className="bg-white/90 text-gray-900 px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 hover:bg-white hover:scale-105 transition z-20"
+                        >
+                           <ImageIcon size={16} /> Change Image
+                        </button>
                     </div>
-                  </div>
+                  )}
+
+                  {!isEditing && (
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      <button
+                        onClick={() => onToggleSave(event.id)}
+                        className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition"
+                      >
+                        <Heart 
+                          size={18} 
+                          className={`transition-colors ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} 
+                        />
+                      </button>
+                      <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-gray-800 shadow-sm flex items-center">
+                        {event.category}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {isEditing && (
+                     <button 
+                        onClick={(e) => handleEditEvent(e, event)}
+                        className="absolute bottom-4 left-4 z-20 bg-blue-500 text-white px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 hover:bg-blue-600 text-xs font-bold"
+                     >
+                        <Edit size={12} /> Edit Details
+                     </button>
+                  )}
                 </div>
                 <div className="p-6 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
@@ -326,6 +439,15 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
         itemId={selectedEventForReview?.id || null}
         itemTitle={selectedEventForReview?.title || ''}
         user={user}
+      />
+
+      {/* Edit/Create Event Modal */}
+      <EventFormModal
+          isOpen={isEventModalOpen}
+          onClose={() => setIsEventModalOpen(false)}
+          onSubmit={handleEventSubmit}
+          initialData={editingEvent}
+          userRole={isEditing ? 'admin' : undefined} 
       />
     </div>
   );

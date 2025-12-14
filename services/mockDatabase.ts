@@ -1,18 +1,19 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
 
 // Increment this version to force a data reset on client browsers
-// Updated to 1.8 to revert app name
-const DB_VERSION = '1.8'; 
+const DB_VERSION = '2.0'; 
 
 // Default settings if none exist in DB
 const INITIAL_SETTINGS: AppSettings = {
   appName: 'AmakenDahab',
-  logoUrl: '/logo.png', // Expecting logo.png in public folder
+  // Using a stable CDN image for the default logo (Palm tree/Beach icon)
+  logoUrl: 'https://cdn-icons-png.flaticon.com/512/1042/1042390.png', 
   heroImages: [
     "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop"
   ],
-  backgroundStyle: 'linear-gradient(to bottom, #0f172a, #1e293b)'
+  backgroundStyle: 'linear-gradient(to bottom, #0f172a, #1e293b)',
+  contentOverrides: {}
 };
 
 // Seed Data for initial load
@@ -208,12 +209,23 @@ class DatabaseService {
   // --- SETTINGS ---
   async getSettings(): Promise<AppSettings> {
     await delay(100);
-    return getItem<AppSettings>('settings', INITIAL_SETTINGS);
+    const settings = getItem<AppSettings>('settings', INITIAL_SETTINGS);
+    // Ensure contentOverrides exists
+    if (!settings.contentOverrides) settings.contentOverrides = {};
+    return settings;
   }
 
   async updateSettings(settings: AppSettings): Promise<void> {
     await delay();
     setItem('settings', settings);
+  }
+  
+  async updateContentOverride(key: string, value: string): Promise<void> {
+      await delay(50);
+      const settings = getItem<AppSettings>('settings', INITIAL_SETTINGS);
+      if (!settings.contentOverrides) settings.contentOverrides = {};
+      settings.contentOverrides[key] = value;
+      setItem('settings', settings);
   }
 
   // --- EVENTS ---
@@ -250,6 +262,16 @@ class DatabaseService {
     const events = getItem<Event[]>('events', []);
     const filtered = events.filter(e => e.id !== eventId);
     setItem('events', filtered);
+  }
+
+  async toggleFeaturedEvent(eventId: string, featured: boolean): Promise<void> {
+     await delay();
+     const events = getItem<Event[]>('events', []);
+     const event = events.find(e => e.id === eventId);
+     if(event) {
+         event.isFeatured = featured;
+         setItem('events', events);
+     }
   }
 
   // --- PROVIDERS ---
@@ -374,9 +396,33 @@ class DatabaseService {
   async getPendingProviders(): Promise<User[]> {
     await delay();
     const users = getItem<User[]>('users', []);
-    return users.filter(u => u.providerStatus === 'pending');
+    return users.filter(u => u.providerStatus === 'pending' || u.providerStatus === 'payment_review');
   }
 
+  // Stage 1: Admin approves profile, asks for payment
+  async requestProviderPayment(userId: string): Promise<void> {
+    await delay();
+    const users = getItem<User[]>('users', []);
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      users[userIndex].providerStatus = 'pending_payment';
+      setItem('users', users);
+    }
+  }
+
+  // Provider submits payment receipt
+  async submitProviderPayment(userId: string, receiptUrl: string): Promise<void> {
+      await delay();
+      const users = getItem<User[]>('users', []);
+      const userIndex = users.findIndex(u => u.id === userId);
+      if (userIndex !== -1) {
+        users[userIndex].providerStatus = 'payment_review';
+        users[userIndex].subscriptionReceipt = receiptUrl;
+        setItem('users', users);
+      }
+  }
+
+  // Stage 2: Admin final approval
   async approveProvider(userId: string): Promise<User | null> {
     await delay();
     const users = getItem<User[]>('users', []);

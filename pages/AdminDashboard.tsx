@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../services/mockDatabase';
 import { Booking, BookingStatus, Event, User, UserRole } from '../types';
-import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star, LogOut } from 'lucide-react';
+import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star, LogOut, DollarSign, ExternalLink } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import EventFormModal from '../components/EventFormModal';
 
@@ -30,7 +30,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // Settings Hook
   const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState(settings);
-  const [newHeroImage, setNewHeroImage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -56,11 +55,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     await loadData();
   };
 
-  const handleProviderAction = async (userId: string, approve: boolean) => {
-    if (approve) {
-      await db.approveProvider(userId);
+  // Stage 1 Approval (Request Payment) or Stage 2 (Final)
+  const handleProviderAction = async (user: User, approve: boolean) => {
+    if (!approve) {
+      await db.rejectProvider(user.id);
     } else {
-      await db.rejectProvider(userId);
+        if (user.providerStatus === 'pending') {
+            // Stage 1: Approve profile -> Request Payment
+            await db.requestProviderPayment(user.id);
+        } else if (user.providerStatus === 'payment_review') {
+            // Stage 2: Final Verification -> Active
+            await db.approveProvider(user.id);
+        }
     }
     await loadData();
   };
@@ -105,10 +111,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       
       try {
         await db.deleteEvent(id);
-        // We can optionally call loadData here, but the optimistic update handles the UI
       } catch (error) {
         console.error("Failed to delete event", error);
-        // If it fails, reload data to revert
         await loadData();
       }
     }
@@ -243,7 +247,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex items-center gap-2">
             <UserCheck className="text-dahab-teal" />
-            <h3 className="font-bold text-gray-900">Pending Provider Applications</h3>
+            <h3 className="font-bold text-gray-900">Provider Approvals</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -251,32 +255,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 <tr>
                   <th className="p-4">Name</th>
                   <th className="p-4">Email</th>
-                  <th className="p-4">Status</th>
+                  <th className="p-4">Stage</th>
+                  <th className="p-4">Proof</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {pendingProviders.length === 0 && (
-                  <tr><td colSpan={4} className="p-8 text-center text-gray-400">No pending verifications</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-gray-400">No pending verifications</td></tr>
                 )}
                 {pendingProviders.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 text-gray-900">
                     <td className="p-4 font-bold">{user.name}</td>
                     <td className="p-4 text-gray-600">{user.email}</td>
                     <td className="p-4">
-                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold flex items-center w-fit gap-1">
-                        <ShieldAlert size={12} /> Pending Review
-                      </span>
+                      {user.providerStatus === 'pending' && (
+                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold flex items-center w-fit gap-1">
+                            <ShieldAlert size={12} /> New Request
+                          </span>
+                      )}
+                      {user.providerStatus === 'payment_review' && (
+                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold flex items-center w-fit gap-1">
+                            <DollarSign size={12} /> Payment Review
+                          </span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                         {user.subscriptionReceipt ? (
+                             <a href={user.subscriptionReceipt} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1 text-sm underline">
+                                 <ExternalLink size={14} /> Receipt
+                             </a>
+                         ) : (
+                             <span className="text-gray-400 text-xs">-</span>
+                         )}
                     </td>
                     <td className="p-4 flex justify-end gap-2">
                       <button 
-                        onClick={() => handleProviderAction(user.id, true)}
+                        onClick={() => handleProviderAction(user, true)}
                         className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 flex items-center gap-1"
                       >
-                        <Check size={14} /> Approve
+                        <Check size={14} /> 
+                        {user.providerStatus === 'pending' ? 'Request Payment' : 'Activate'}
                       </button>
                       <button 
-                        onClick={() => handleProviderAction(user.id, false)}
+                        onClick={() => handleProviderAction(user, false)}
                         className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300 flex items-center gap-1"
                       >
                         <X size={14} /> Reject

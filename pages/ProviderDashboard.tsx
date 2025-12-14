@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User, Event, UserRole, Booking } from '../types';
 import { db } from '../services/mockDatabase';
-import { Plus, Clock, CheckCircle, XCircle, Calendar, MapPin, Edit2, Trash2, Eye, BarChart3, Users, DollarSign, ShieldAlert, LogOut } from 'lucide-react';
+import { Plus, Clock, CheckCircle, XCircle, Calendar, MapPin, Edit2, Trash2, Eye, BarChart3, Users, DollarSign, ShieldAlert, LogOut, Upload, Loader2, Smartphone } from 'lucide-react';
 import EventFormModal from '../components/EventFormModal';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +17,10 @@ const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  
+  // Payment State
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('dahab_user');
@@ -40,12 +44,9 @@ const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onLogout }) => {
     const mine = allEvents.filter(e => e.organizerId === userId);
     setMyEvents(mine);
     
-    // Fetch bookings (Placeholder - mock DB bookings might not be linked to provider ID directly in this simple schema, 
-    // but assuming we'd filter by provider's items)
     const allBookings = await db.getBookings();
-    // For mock purposes, filter bookings for items created by this provider
     const myItemIds = mine.map(e => e.id);
-    const providerBookings = allBookings.filter(b => myItemIds.includes(b.itemId)); // + add service bookings if any
+    const providerBookings = allBookings.filter(b => myItemIds.includes(b.itemId)); 
     setBookings(providerBookings);
 
     setLoading(false);
@@ -60,7 +61,6 @@ const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onLogout }) => {
     if (!user) return;
     
     if (editingEvent) {
-      // Keep status as pending when editing? Or resets? Let's say editing resets to pending for safety.
       await db.updateEvent({ ...editingEvent, ...eventData, status: 'pending' } as Event);
     } else {
       await db.addEvent({
@@ -87,9 +87,115 @@ const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const handlePaymentSubmit = async () => {
+    if(!user || !paymentFile) return;
+    setIsSubmittingPayment(true);
+    // Simulate upload
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        await db.submitProviderPayment(user.id, base64);
+        setIsSubmittingPayment(false);
+        // Force refresh user to see new status
+        const updated = await db.getUser(user.id);
+        if(updated) {
+            setUser(updated);
+            localStorage.setItem('dahab_user', JSON.stringify(updated));
+        }
+    };
+    reader.readAsDataURL(paymentFile);
+  };
+
   if (loading) return <div className="p-10 text-center">Loading Dashboard...</div>;
   if (!user) return null;
 
+  // Subscription Paywall for Stage 2 (pending_payment)
+  if (user.providerStatus === 'pending_payment') {
+      return (
+          <div className="max-w-xl mx-auto py-10 px-4">
+              <div className="bg-white rounded-3xl shadow-xl overflow-hidden text-center">
+                  <div className="bg-dahab-teal p-6 text-white">
+                      <h1 className="text-2xl font-bold">Provider Subscription</h1>
+                      <p className="opacity-90">Step 2 of 2: Activate your account</p>
+                  </div>
+                  <div className="p-8 space-y-6">
+                      <div className="bg-green-50 text-green-800 p-4 rounded-xl flex items-center gap-3 text-left">
+                          <CheckCircle className="shrink-0" />
+                          <div>
+                              <p className="font-bold">Profile Approved!</p>
+                              <p className="text-sm">Your application has been reviewed. To start listing events and services, please pay the annual subscription fee.</p>
+                          </div>
+                      </div>
+
+                      <div className="border-2 border-dahab-gold/30 bg-yellow-50 rounded-2xl p-6">
+                          <p className="text-gray-500 uppercase text-xs font-bold tracking-wider mb-2">Annual Subscription</p>
+                          <h2 className="text-4xl font-bold text-gray-900 mb-1">500 EGP</h2>
+                          <p className="text-sm text-gray-500">/ Year</p>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-xl p-4 text-left space-y-3">
+                          <h3 className="font-bold text-gray-900">How to pay:</h3>
+                          <div className="flex items-center gap-3">
+                              <Smartphone className="text-red-500" />
+                              <div>
+                                  <p className="font-bold text-sm">Vodafone Cash</p>
+                                  <p className="font-mono text-gray-600">010 1234 5678</p>
+                              </div>
+                          </div>
+                          <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+                             Transfer the amount and upload the screenshot below.
+                          </div>
+                      </div>
+
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:bg-gray-50 transition relative">
+                           <input 
+                             type="file" 
+                             accept="image/*"
+                             onChange={(e) => setPaymentFile(e.target.files?.[0] || null)}
+                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                           />
+                           <div className="flex flex-col items-center gap-2 pointer-events-none">
+                              <Upload className="text-gray-400" size={32} />
+                              <span className="font-medium text-gray-600">{paymentFile ? paymentFile.name : "Upload Receipt"}</span>
+                           </div>
+                      </div>
+
+                      <button 
+                        onClick={handlePaymentSubmit}
+                        disabled={!paymentFile || isSubmittingPayment}
+                        className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition disabled:opacity-50 flex justify-center"
+                      >
+                         {isSubmittingPayment ? <Loader2 className="animate-spin" /> : "Submit Payment for Verification"}
+                      </button>
+
+                       <button onClick={onLogout} className="text-red-500 text-sm font-bold hover:underline">
+                           Logout
+                       </button>
+                  </div>
+              </div>
+          </div>
+      )
+  }
+
+  // Payment Review State
+  if (user.providerStatus === 'payment_review') {
+      return (
+          <div className="max-w-lg mx-auto py-20 px-4 text-center">
+               <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                   <Clock size={40} className="text-blue-600" />
+               </div>
+               <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Under Review</h1>
+               <p className="text-gray-500 mb-8">
+                   We have received your receipt. The admin will verify the transaction and activate your account shortly.
+               </p>
+               <button onClick={onLogout} className="bg-gray-200 text-gray-800 px-6 py-2 rounded-full font-bold">
+                   Logout & Check Later
+               </button>
+          </div>
+      )
+  }
+
+  // Active Dashboard (Approved)
   return (
     <div className="space-y-8 pb-20">
       {/* Header */}
@@ -118,7 +224,7 @@ const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onLogout }) => {
           <ShieldAlert className="text-yellow-600 shrink-0 mt-1" />
           <div>
             <h3 className="font-bold text-yellow-800">Account Pending Verification</h3>
-            <p className="text-sm text-yellow-700">Your provider account is currently under review by the admin. Your events will not be public until your account is approved.</p>
+            <p className="text-sm text-yellow-700">Your provider account is currently under review by the admin. Check back soon for subscription details.</p>
           </div>
         </div>
       )}
