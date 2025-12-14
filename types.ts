@@ -1,0 +1,62 @@
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+  PROVIDER = 'provider'
+}
+
+export enum BookingStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  REJECTED = 'rejected'
+}
+
+export enum PaymentMethod {
+  VODAFONE_CASH = 'Vodafone Cash',
+  INSTAPAY = 'Instapay'
+}
+
+export interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+  email: string;
+  isEmailVerified?: boolean;
+  provider?: 'email' | 'google' | 'facebook';
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  price: number;
+  imageUrl: string;
+  organizerId: string;
+  category: 'Party' | 'Hike' | 'Diving' | 'Wellness' | 'Workshop';
+}
+
+export interface ServiceProvider {
+  id: string;
+  name: string;
+  serviceType: 'Driver' | 'Cleaner' | 'Guide' | 'Maintenance';
+  description: string;
+  phone: string;
+  rating: number;
+  imageUrl: string;
+  isVerified: boolean;
+}
+
+export interface Booking {
+  id: string;
+  itemId: string; // Event ID or Service ID
+  itemType: 'event' | 'service';
+  userId: string;
+  userName: string;
+  amount: number;
+  method: PaymentMethod;
+  status: BookingStatus;
+  timestamp: string;
+  receiptImage?: string; // Base64 placeholder
+}

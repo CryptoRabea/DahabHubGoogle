@@ -1,0 +1,175 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Calendar, MapPin, Clock, Search, X, CalendarPlus } from 'lucide-react';
+import { Event } from '../types';
+import { db } from '../services/mockDatabase';
+
+const CATEGORIES = ['All', 'Party', 'Hike', 'Diving', 'Wellness', 'Workshop'];
+
+const Events: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  useEffect(() => {
+    db.getEvents().then(data => {
+      setEvents(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const addToGoogleCalendar = (event: Event) => {
+    // Parse date: 2024-06-15
+    const [year, month, day] = event.date.split('-').map(Number);
+    
+    // Parse time: 08:00 AM
+    const [timeStr, modifier] = event.time.split(' ');
+    let [hours, minutes] = timeStr.split(':').map(Number);
+
+    if (modifier === 'PM' && hours < 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+
+    const startDate = new Date(year, month - 1, day, hours, minutes);
+    const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000)); // Default duration 2 hours
+
+    const format = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
+
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${format(startDate)}/${format(endDate)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}`;
+    
+    window.open(url, '_blank');
+  };
+
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = 
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      event.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesCategory = selectedCategory === 'All' || event.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Upcoming Events</h1>
+          <p className="text-gray-500">Discover what's happening in town</p>
+        </div>
+        
+        {/* Search and Filter Section */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input 
+              type="text" 
+              placeholder="Search events..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-dahab-teal/50 transition shadow-sm"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Category Filter Pills - Scrollable on mobile */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 md:pb-0 items-center">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition border ${
+                  selectedCategory === cat
+                    ? 'bg-dahab-teal text-white border-dahab-teal shadow-md'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-20 text-gray-500 flex flex-col items-center">
+            <div className="w-8 h-8 border-4 border-dahab-teal border-t-transparent rounded-full animate-spin mb-4"></div>
+            Loading events...
+        </div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
+            <p className="text-gray-500 text-lg">No events found matching your criteria.</p>
+            <button 
+                onClick={() => {setSearchQuery(''); setSelectedCategory('All');}}
+                className="mt-4 text-dahab-teal font-bold hover:underline"
+            >
+                Clear Filters
+            </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((event) => (
+            <div key={event.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition duration-300 group flex flex-col h-full">
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src={event.imageUrl} 
+                  alt={event.title} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                />
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-gray-800 shadow-sm">
+                  {event.category}
+                </div>
+              </div>
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xl font-bold text-gray-900 line-clamp-2">{event.title}</h3>
+                  <span className="text-dahab-teal font-bold whitespace-nowrap ml-2">{event.price} EGP</span>
+                </div>
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <Calendar size={16} className="text-dahab-gold" />
+                    <span>{event.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <Clock size={16} className="text-dahab-gold" />
+                    <span>{event.time}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <MapPin size={16} className="text-dahab-gold" />
+                    <span className="truncate">{event.location}</span>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 mt-auto pt-4 border-t border-gray-100">
+                  <button 
+                    onClick={() => addToGoogleCalendar(event)}
+                    className="p-3 rounded-xl border-2 border-gray-100 text-gray-500 hover:border-dahab-teal hover:text-dahab-teal hover:bg-teal-50 transition flex items-center justify-center"
+                    title="Add to Google Calendar"
+                  >
+                    <CalendarPlus size={20} />
+                  </button>
+                  <Link 
+                    to={`/book/event/${event.id}`}
+                    className="flex-1 flex items-center justify-center bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-dahab-teal transition shadow-lg shadow-gray-200"
+                  >
+                    Book Now
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Events;
