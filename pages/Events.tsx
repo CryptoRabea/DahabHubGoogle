@@ -1,12 +1,117 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Search, X, CalendarPlus, Heart, MessageSquare, Map as MapIcon, List } from 'lucide-react';
+import { Calendar, MapPin, Clock, Search, X, CalendarPlus, Heart, MessageSquare, Map as MapIcon, List, Download, ExternalLink } from 'lucide-react';
 import { Event, User } from '../types';
 import { db } from '../services/mockDatabase';
 import ReviewsModal from '../components/ReviewsModal';
 import EventMap from '../components/EventMap';
 
 const CATEGORIES = ['All', 'Party', 'Hike', 'Diving', 'Wellness', 'Workshop'];
+
+// Helper to generate Google Calendar URL
+const getGoogleCalendarUrl = (event: Event) => {
+  const [year, month, day] = event.date.split('-').map(Number);
+  const [timeStr, modifier] = event.time.split(' ');
+  let [hours, minutes] = timeStr.split(':').map(Number);
+
+  if (modifier === 'PM' && hours < 12) hours += 12;
+  if (modifier === 'AM' && hours === 12) hours = 0;
+
+  const startDate = new Date(year, month - 1, day, hours, minutes);
+  const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000)); // Default duration 2 hours
+
+  const format = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${format(startDate)}/${format(endDate)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}`;
+};
+
+// Helper to download ICS file for Outlook/Apple Calendar
+const downloadICS = (event: Event) => {
+  const [year, month, day] = event.date.split('-').map(Number);
+  const [timeStr, modifier] = event.time.split(' ');
+  let [hours, minutes] = timeStr.split(':').map(Number);
+
+  if (modifier === 'PM' && hours < 12) hours += 12;
+  if (modifier === 'AM' && hours === 12) hours = 0;
+
+  const startDate = new Date(year, month - 1, day, hours, minutes);
+  const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000));
+  
+  const format = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//AmakenDahab//Events//EN',
+    'BEGIN:VEVENT',
+    `UID:${event.id}@amakendahab.com`,
+    `DTSTAMP:${format(new Date())}`,
+    `DTSTART:${format(startDate)}`,
+    `DTEND:${format(endDate)}`,
+    `SUMMARY:${event.title}`,
+    `DESCRIPTION:${event.description}`,
+    `LOCATION:${event.location}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `${event.title.replace(/\s+/g, '_')}.ics`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const CalendarExportButton = ({ event }: { event: Event }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`p-3 rounded-xl border-2 transition flex items-center justify-center ${isOpen ? 'border-dahab-teal text-dahab-teal bg-teal-50' : 'border-gray-100 text-gray-500 hover:border-dahab-teal hover:text-dahab-teal hover:bg-teal-50'}`}
+        title="Add to Calendar"
+      >
+        <CalendarPlus size={20} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 p-1.5 z-30 animate-in fade-in zoom-in-95 duration-200">
+           <div className="text-xs font-bold text-gray-400 px-3 py-1 uppercase tracking-wider">Add to Calendar</div>
+           <button 
+             onClick={() => { window.open(getGoogleCalendarUrl(event), '_blank'); setIsOpen(false); }}
+             className="w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-dahab-teal rounded-lg flex items-center gap-2 transition-colors"
+           >
+             <ExternalLink size={16} /> Google Calendar
+           </button>
+           <button 
+             onClick={() => { downloadICS(event); setIsOpen(false); }}
+             className="w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-dahab-teal rounded-lg flex items-center gap-2 transition-colors"
+           >
+             <Download size={16} /> Outlook / iCal
+           </button>
+           
+           {/* Arrow at bottom */}
+           <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-gray-100 rotate-45"></div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface EventsProps {
   user: User | null;
@@ -32,30 +137,9 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
   }, []);
 
   const openReviews = (e: React.MouseEvent, event: Event) => {
-    e.preventDefault(); // Prevent linking if inside a link, though here button is separate
+    e.preventDefault(); 
     setSelectedEventForReview({ id: event.id, title: event.title });
     setReviewModalOpen(true);
-  };
-
-  const addToGoogleCalendar = (event: Event) => {
-    // Parse date: 2024-06-15
-    const [year, month, day] = event.date.split('-').map(Number);
-    
-    // Parse time: 08:00 AM
-    const [timeStr, modifier] = event.time.split(' ');
-    let [hours, minutes] = timeStr.split(':').map(Number);
-
-    if (modifier === 'PM' && hours < 12) hours += 12;
-    if (modifier === 'AM' && hours === 12) hours = 0;
-
-    const startDate = new Date(year, month - 1, day, hours, minutes);
-    const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000)); // Default duration 2 hours
-
-    const format = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
-
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${format(startDate)}/${format(endDate)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}`;
-    
-    window.open(url, '_blank');
   };
 
   const filteredEvents = events.filter(event => {
@@ -114,7 +198,7 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
             )}
           </div>
 
-          {/* Category Filter Pills - Scrollable on mobile */}
+          {/* Category Filter Pills */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 md:pb-0 items-center">
             {CATEGORIES.map((cat) => (
               <button
@@ -157,8 +241,8 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
           {filteredEvents.map((event) => {
              const isSaved = user?.savedEventIds?.includes(event.id);
              return (
-              <div key={event.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition duration-300 group flex flex-col h-full relative">
-                <div className="relative h-48 overflow-hidden">
+              <div key={event.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition duration-300 group flex flex-col h-full relative">
+                <div className="relative h-48 overflow-hidden rounded-t-2xl">
                   <img 
                     src={event.imageUrl} 
                     alt={event.title} 
@@ -207,13 +291,9 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
                     >
                       <MessageSquare size={20} />
                     </button>
-                    <button 
-                      onClick={() => addToGoogleCalendar(event)}
-                      className="p-3 rounded-xl border-2 border-gray-100 text-gray-500 hover:border-dahab-teal hover:text-dahab-teal hover:bg-teal-50 transition flex items-center justify-center"
-                      title="Add to Google Calendar"
-                    >
-                      <CalendarPlus size={20} />
-                    </button>
+                    
+                    <CalendarExportButton event={event} />
+
                     <Link 
                       to={`/book/event/${event.id}`}
                       className="flex-1 flex items-center justify-center bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-dahab-teal transition shadow-lg shadow-gray-200"

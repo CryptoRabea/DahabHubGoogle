@@ -15,6 +15,13 @@ export enum PaymentMethod {
   INSTAPAY = 'Instapay'
 }
 
+export interface AppSettings {
+  appName: string;
+  logoUrl: string; // Base64 or URL
+  heroImages: string[];
+  backgroundStyle: string; // CSS background value
+}
+
 export interface User {
   id: string;
   name: string;

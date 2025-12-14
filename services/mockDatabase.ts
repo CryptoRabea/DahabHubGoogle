@@ -1,4 +1,19 @@
-import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment } from '../types';
+import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
+
+const INITIAL_SETTINGS: AppSettings = {
+  appName: 'Dahab Echo',
+  logoUrl: '', // Empty defaults to text, Admin can upload the logo
+  heroImages: [
+    "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop", // Red Sea Reef
+    "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop", // Clear Beach/Sea
+    "https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=1920&auto=format&fit=crop", // Desert Mountains
+    "https://images.unsplash.com/photo-1539768942893-daf53e448371?q=80&w=1920&auto=format&fit=crop", // Palms & Beach
+  ],
+  backgroundStyle: `radial-gradient(at 0% 0%, hsla(172, 85%, 93%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(45, 90%, 96%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(200, 85%, 95%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(180, 80%, 94%, 1) 0px, transparent 50%)`
+};
 
 // Initial Seed Data
 const INITIAL_EVENTS: Event[] = [
@@ -128,6 +143,17 @@ class MockDatabase {
 
   private setStorage(key: string, data: any) {
     localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  // --- SETTINGS ---
+  async getSettings(): Promise<AppSettings> {
+    await delay(200);
+    return this.getStorage<AppSettings>('dahab_settings', INITIAL_SETTINGS);
+  }
+
+  async updateSettings(settings: AppSettings): Promise<void> {
+    await delay(300);
+    this.setStorage('dahab_settings', settings);
   }
 
   // --- EVENTS ---

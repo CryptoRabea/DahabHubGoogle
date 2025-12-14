@@ -12,9 +12,11 @@ import SocialHub from './pages/SocialHub';
 import AIChat from './components/AIChat';
 import { User, UserRole } from './types';
 import { db } from './services/mockDatabase';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const { settings } = useSettings();
 
   // Check for session in localstorage on load
   useEffect(() => {
@@ -56,7 +58,15 @@ const App: React.FC = () => {
 
   return (
     <HashRouter>
-      <div className="min-h-screen bg-slate-50 pb-20 md:pb-0 md:pt-20 text-gray-800">
+      <div 
+        className="min-h-screen pb-20 md:pb-0 md:pt-20 text-gray-800 transition-all duration-500 ease-in-out"
+        style={{
+          backgroundImage: settings.backgroundStyle,
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         <Navbar userRole={user?.role || null} onLogout={handleLogout} />
         
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -86,6 +96,14 @@ const App: React.FC = () => {
         <AIChat />
       </div>
     </HashRouter>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
   );
 };
 

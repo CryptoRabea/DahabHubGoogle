@@ -3,25 +3,26 @@ import { Link } from 'react-router-dom';
 import { db } from '../services/mockDatabase';
 import { Event } from '../types';
 import { Calendar, MapPin, Clock, ArrowRight, Sparkles } from 'lucide-react';
-
-const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1544550581-5f7ceaf7f992?q=80&w=1920&auto=format&fit=crop", // Red Sea Reef
-  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop", // Clear Beach/Sea
-  "https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=1920&auto=format&fit=crop", // Desert Mountains
-  "https://images.unsplash.com/photo-1539768942893-daf53e448371?q=80&w=1920&auto=format&fit=crop", // Palms & Beach
-];
+import { useSettings } from '../contexts/SettingsContext';
 
 const Home: React.FC = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const { settings } = useSettings();
 
   useEffect(() => {
+    if (settings.heroImages.length === 0) return;
+
     // Slideshow Timer
     const timer = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % HERO_IMAGES.length);
+      setCurrentImage((prev) => (prev + 1) % settings.heroImages.length);
     }, 5000);
 
+    return () => clearInterval(timer);
+  }, [settings.heroImages]);
+
+  useEffect(() => {
     // Fetch Featured Events
     const fetchData = async () => {
       const data = await db.getEvents();
@@ -29,8 +30,6 @@ const Home: React.FC = () => {
       setLoading(false);
     };
     fetchData();
-
-    return () => clearInterval(timer);
   }, []);
 
   return (
@@ -39,27 +38,33 @@ const Home: React.FC = () => {
       <section className="relative rounded-3xl overflow-hidden shadow-2xl h-[500px] group">
         {/* Slideshow Background */}
         <div className="absolute inset-0 bg-gray-900">
-          {HERO_IMAGES.map((img, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-all duration-[2000ms] ease-in-out transform ${
-                index === currentImage ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
-              }`}
-            >
-              <img 
-                src={img} 
-                alt={`Dahab scenery ${index + 1}`} 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
+          {settings.heroImages.length > 0 ? (
+            settings.heroImages.map((img, index) => (
+              <div
+                key={index}
+                className={`absolute inset-0 transition-all duration-[2000ms] ease-in-out transform ${
+                  index === currentImage ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
+                }`}
+              >
+                <img 
+                  src={img} 
+                  alt={`Dahab scenery ${index + 1}`} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
+              </div>
+            ))
+          ) : (
+            <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-500">
+              No images configured
             </div>
-          ))}
+          )}
         </div>
 
         {/* Gradient Overlay for Text Readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-8 md:p-16 z-10">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-lg">
-            Experience the Soul of <span className="text-dahab-gold">Dahab</span>
+            Experience the Soul of <span className="text-dahab-gold">{settings.appName.split(' ')[0]}</span>
           </h1>
           <p className="text-gray-100 text-lg md:text-xl max-w-2xl mb-8 drop-shadow-md font-medium">
             The ultimate social hub. Discover events, book reliable drivers, and connect with the community.
@@ -76,7 +81,7 @@ const Home: React.FC = () => {
         
         {/* Slide Indicators */}
         <div className="absolute bottom-6 right-8 z-20 flex gap-2">
-          {HERO_IMAGES.map((_, idx) => (
+          {settings.heroImages.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentImage(idx)}
@@ -91,7 +96,7 @@ const Home: React.FC = () => {
       {/* Categories */}
       <section>
         <div className="flex justify-between items-end mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Explore Dahab</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Explore {settings.appName.split(' ')[0]}</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -187,7 +192,7 @@ const Home: React.FC = () => {
         <div className="absolute top-0 right-0 w-64 h-64 bg-dahab-teal rounded-full blur-[100px] opacity-20 translate-x-1/2 -translate-y-1/2"></div>
         
         <div className="space-y-4 relative z-10">
-          <h2 className="text-3xl font-bold">Drive with AmakenDahab</h2>
+          <h2 className="text-3xl font-bold">Drive with {settings.appName}</h2>
           <p className="text-gray-400 max-w-md">
             Are you a local driver or service provider? Join our verified network and grow your business today.
           </p>
