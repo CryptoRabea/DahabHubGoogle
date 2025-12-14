@@ -1,12 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 
 export const getDahabConciergeResponse = async (query: string): Promise<string> => {
-  if (!process.env.API_KEY) {
+  // Use process.env.API_KEY directly. Vite replaces 'process.env' with the env object during build.
+  // We assume the variable is pre-configured as per guidelines.
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    console.warn("API_KEY is missing in environment variables");
     return "I'm sorry, I cannot connect to the AI service right now. Please check the configuration.";
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     
     const systemInstruction = `
       You are an expert concierge and local guide for Dahab, Egypt. 

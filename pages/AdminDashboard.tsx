@@ -81,7 +81,7 @@ const AdminDashboard: React.FC = () => {
         time: eventData.time!,
         location: eventData.location!,
         price: eventData.price!,
-        imageUrl: eventData.imageUrl || 'https://picsum.photos/800/600',
+        imageUrl: eventData.imageUrl || 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?auto=format&fit=crop&q=80&w=800',
         category: eventData.category!,
         organizerId: 'admin1',
         status: 'approved' // Admins always approve their own

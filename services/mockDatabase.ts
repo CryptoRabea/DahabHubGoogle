@@ -1,5 +1,8 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
 
+// Increment this version to force a data reset on client browsers
+const DB_VERSION = '1.2'; 
+
 // Default settings if none exist in DB
 const INITIAL_SETTINGS: AppSettings = {
   appName: 'AmakenDahab',
@@ -90,6 +93,22 @@ class DatabaseService {
   }
 
   private _initSeeds() {
+    // Check DB Version to force reset on updates if needed
+    const currentVersion = localStorage.getItem('db_version');
+    if (currentVersion !== DB_VERSION) {
+      console.log('Database version mismatch. Resetting seed data...');
+      localStorage.removeItem('events');
+      localStorage.removeItem('providers');
+      // We keep 'users' and 'bookings' to not delete user progress if possible, 
+      // but for "broken images" we definitely need to reset events/providers.
+      // If severe structure change, use localStorage.clear();
+      
+      // Force update settings to get new hero images if changed
+      localStorage.removeItem('settings');
+      
+      localStorage.setItem('db_version', DB_VERSION);
+    }
+
     if (!localStorage.getItem('events')) {
       setItem('events', SEED_EVENTS);
     }
@@ -373,7 +392,8 @@ class DatabaseService {
           description: 'Verified service provider',
           phone: '',
           rating: 5.0,
-          imageUrl: 'https://picsum.photos/200/200', 
+          // Use a reliable Unsplash image instead of Picsum which often breaks
+          imageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200', 
           isVerified: true
         };
         providers.push(newProvider);
