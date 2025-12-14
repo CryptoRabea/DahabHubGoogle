@@ -78,6 +78,7 @@ export interface Event {
   imageUrl: string;
   organizerId: string;
   category: 'Party' | 'Hike' | 'Diving' | 'Wellness' | 'Workshop';
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 export interface ServiceProvider {

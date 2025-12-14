@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../services/mockDatabase';
 import { Booking, BookingStatus, Event, User, UserRole } from '../types';
-import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert } from 'lucide-react';
+import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import EventFormModal from '../components/EventFormModal';
 
 const PRESET_BACKGROUNDS = [
   { name: 'Dahab Mesh', value: 'radial-gradient(at 0% 0%, hsla(172, 85%, 93%, 1) 0px, transparent 50%), radial-gradient(at 100% 0%, hsla(45, 90%, 96%, 1) 0px, transparent 50%), radial-gradient(at 100% 100%, hsla(200, 85%, 95%, 1) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(180, 80%, 94%, 1) 0px, transparent 50%)' },
@@ -15,9 +16,13 @@ const PRESET_BACKGROUNDS = [
 const AdminDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [pendingProviders, setPendingProviders] = useState<User[]>([]);
-  const [newEventTitle, setNewEventTitle] = useState('');
-  const [activeTab, setActiveTab] = useState<'bookings' | 'events' | 'verifications' | 'settings'>('bookings');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [activeTab, setActiveTab] = useState<'bookings' | 'events' | 'pending-events' | 'verifications' | 'settings'>('bookings');
   
+  // Event Management State
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+
   // Settings Hook
   const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState(settings);
@@ -38,6 +43,8 @@ const AdminDashboard: React.FC = () => {
     setBookings(b);
     const p = await db.getPendingProviders();
     setPendingProviders(p);
+    const e = await db.getEvents();
+    setEvents(e);
   };
 
   const handleBookingAction = async (id: string, status: BookingStatus) => {
@@ -54,27 +61,51 @@ const AdminDashboard: React.FC = () => {
     loadData();
   };
 
-  const handleCreateEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if(!newEventTitle) return;
-    
-    await db.addEvent({
-      id: Math.random().toString(36),
-      title: newEventTitle,
-      description: 'Admin created event',
-      date: '2024-12-01',
-      time: '10:00 AM',
-      location: 'Dahab',
-      price: 100,
-      imageUrl: 'https://picsum.photos/800/600',
-      organizerId: 'admin1',
-      category: 'Workshop'
-    });
-    setNewEventTitle('');
-    alert('Event created!');
+  // --- Event Handlers ---
+  const handleOpenEventModal = (event?: Event) => {
+    setEditingEvent(event || null);
+    setIsEventModalOpen(true);
   };
 
-  // --- Settings Handlers ---
+  const handleEventSubmit = async (eventData: Partial<Event>) => {
+    if (editingEvent) {
+      // Edit existing
+      await db.updateEvent({ ...editingEvent, ...eventData } as Event);
+    } else {
+      // Create new
+      await db.addEvent({
+        id: Math.random().toString(36).substr(2, 9),
+        title: eventData.title!,
+        description: eventData.description!,
+        date: eventData.date!,
+        time: eventData.time!,
+        location: eventData.location!,
+        price: eventData.price!,
+        imageUrl: eventData.imageUrl || 'https://picsum.photos/800/600',
+        category: eventData.category!,
+        organizerId: 'admin1',
+        status: 'approved' // Admins always approve their own
+      } as Event);
+    }
+    await loadData();
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      await db.deleteEvent(id);
+      loadData();
+    }
+  };
+
+  const handleApproveEvent = async (event: Event) => {
+    await db.updateEvent({ ...event, status: 'approved' });
+    loadData();
+  };
+
+  const handleRejectEvent = async (event: Event) => {
+    await db.updateEvent({ ...event, status: 'rejected' });
+    loadData();
+  };
 
   const handleSaveSettings = async () => {
     await updateSettings(localSettings);
@@ -106,6 +137,8 @@ const AdminDashboard: React.FC = () => {
     }));
   };
 
+  const pendingEvents = events.filter(e => e.status === 'pending');
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -125,16 +158,23 @@ const AdminDashboard: React.FC = () => {
             {pendingProviders.length > 0 && <span className="bg-red-500 text-white text-xs px-1.5 rounded-full">{pendingProviders.length}</span>}
           </button>
           <button 
+            onClick={() => setActiveTab('pending-events')}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'pending-events' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
+          >
+            Event Approvals
+             {pendingEvents.length > 0 && <span className="bg-orange-500 text-white text-xs px-1.5 rounded-full">{pendingEvents.length}</span>}
+          </button>
+          <button 
             onClick={() => setActiveTab('events')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'events' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
           >
-            Manage Events
+            All Events
           </button>
           <button 
             onClick={() => setActiveTab('settings')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'settings' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
           >
-            <Settings size={18} /> Design & Settings
+            <Settings size={18} /> Settings
           </button>
         </div>
       </div>
@@ -241,33 +281,139 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'pending-events' && (
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-2">
+             <AlertCircle className="text-orange-500" />
+             <h3 className="font-bold">Pending Event Approvals</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-sm uppercase">
+                <tr>
+                  <th className="p-4">Event</th>
+                  <th className="p-4">Organizer</th>
+                  <th className="p-4">Date</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {pendingEvents.length === 0 && (
+                  <tr><td colSpan={4} className="p-8 text-center text-gray-400">No pending events</td></tr>
+                )}
+                {pendingEvents.map((event) => (
+                  <tr key={event.id} className="hover:bg-gray-50">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <img src={event.imageUrl} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
+                        <div>
+                          <span className="font-bold text-gray-900 block">{event.title}</span>
+                          <span className="text-xs text-gray-500 line-clamp-1">{event.description}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">{event.organizerId}</td>
+                    <td className="p-4 text-sm text-gray-600">{event.date} at {event.time}</td>
+                    <td className="p-4 flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleOpenEventModal(event)}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 flex items-center gap-1"
+                      >
+                        <Edit2 size={14} /> View/Edit
+                      </button>
+                      <button 
+                        onClick={() => handleApproveEvent(event)}
+                        className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 flex items-center gap-1"
+                      >
+                        <Check size={14} /> Approve
+                      </button>
+                      <button 
+                        onClick={() => handleRejectEvent(event)}
+                        className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-sm font-bold hover:bg-red-200 flex items-center gap-1"
+                      >
+                        <X size={14} /> Reject
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'events' && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-xl font-bold mb-4">Quick Add Event</h3>
-          <form onSubmit={handleCreateEvent} className="flex gap-4">
-            <input 
-              type="text" 
-              value={newEventTitle} 
-              onChange={e => setNewEventTitle(e.target.value)}
-              placeholder="Event Title..." 
-              className="flex-1 border border-gray-300 rounded-xl px-4 py-2"
-            />
-            <button type="submit" className="bg-dahab-gold text-black font-bold px-6 py-2 rounded-xl flex items-center gap-2">
-              <Plus size={18} /> Post
-            </button>
-          </form>
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+             <div className="flex items-center gap-2">
+               <Calendar className="text-dahab-teal" />
+               <h3 className="font-bold">All Events</h3>
+             </div>
+             <button 
+               onClick={() => handleOpenEventModal()}
+               className="bg-dahab-teal text-white px-4 py-2 rounded-lg font-bold hover:bg-teal-700 flex items-center gap-2"
+             >
+               <Plus size={18} /> New Event
+             </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-sm uppercase">
+                <tr>
+                  <th className="p-4">Event</th>
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {events.map((event) => (
+                  <tr key={event.id} className="hover:bg-gray-50">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <img src={event.imageUrl} className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
+                        <span className="font-bold text-gray-900">{event.title}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">{event.date}</td>
+                    <td className="p-4">
+                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          event.status === 'approved' ? 'bg-green-100 text-green-700' :
+                          event.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                       }`}>
+                         {event.status || 'approved'}
+                       </span>
+                    </td>
+                    <td className="p-4 flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleOpenEventModal(event)}
+                        className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" title="Edit"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className="p-1.5 bg-gray-100 text-gray-500 rounded hover:bg-gray-200 hover:text-red-500" title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {activeTab === 'settings' && (
         <div className="space-y-6">
-          
-          {/* 1. Branding Section */}
+          {/* Settings content same as before */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <ImageIcon size={20} className="text-dahab-teal" /> App Branding
             </h3>
-            
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">App Name</label>
@@ -278,7 +424,6 @@ const AdminDashboard: React.FC = () => {
                   className="w-full border border-gray-300 rounded-xl px-4 py-2"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Logo</label>
                 <div className="flex items-center gap-4">
@@ -303,19 +448,16 @@ const AdminDashboard: React.FC = () => {
                     >
                       <Upload size={16} /> Upload New Logo
                     </button>
-                    <p className="text-xs text-gray-500 mt-1">Recommended size: 512x512px transparent PNG</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* 2. Appearance Section */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          
+           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Palette size={20} className="text-dahab-teal" /> Appearance
             </h3>
-            
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Background Style</label>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
@@ -338,46 +480,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* 3. Hero Images Section */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <ImageIcon size={20} className="text-dahab-teal" /> Landing Page Slideshow
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newHeroImage}
-                  onChange={(e) => setNewHeroImage(e.target.value)}
-                  placeholder="Paste Image URL..."
-                  className="flex-1 border border-gray-300 rounded-xl px-4 py-2"
-                />
-                <button 
-                  onClick={handleAddHeroImage}
-                  className="bg-black text-white px-4 py-2 rounded-xl font-bold hover:bg-gray-800"
-                >
-                  Add
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {localSettings.heroImages.map((img, idx) => (
-                  <div key={idx} className="relative group rounded-xl overflow-hidden h-32">
-                    <img src={img} alt="Hero" className="w-full h-full object-cover" />
-                    <button 
-                      onClick={() => handleRemoveHeroImage(idx)}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Save Action */}
           <div className="flex justify-end pt-4">
             <button 
               onClick={handleSaveSettings}
@@ -386,9 +488,16 @@ const AdminDashboard: React.FC = () => {
               Save Changes
             </button>
           </div>
-
         </div>
       )}
+
+      {/* Event Modal */}
+      <EventFormModal 
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        onSubmit={handleEventSubmit}
+        initialData={editingEvent}
+      />
     </div>
   );
 };

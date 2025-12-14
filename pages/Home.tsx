@@ -25,7 +25,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     // Fetch Featured Events
     const fetchData = async () => {
-      const data = await db.getEvents();
+      const data = await db.getPublicEvents();
       setFeaturedEvents(data.slice(0, 3)); // Display top 3 events
       setLoading(false);
     };
@@ -101,9 +101,9 @@ const Home: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { title: 'Events & Parties', icon: '🎉', link: '/events', color: 'bg-purple-100 text-purple-600' },
-            { title: 'Drivers', icon: '🚕', link: '/services', color: 'bg-yellow-100 text-yellow-600' },
-            { title: 'Morning Events', icon: '☀️', link: '/events', color: 'bg-orange-100 text-orange-600' },
-            { title: 'Night Events', icon: '🌙', link: '/events', color: 'bg-indigo-100 text-indigo-600' },
+            { title: 'Drivers & Services', icon: '🚕', link: '/services', color: 'bg-yellow-100 text-yellow-600' },
+            { title: 'Community Hub', icon: '👥', link: '/community', color: 'bg-blue-100 text-blue-600' },
+            { title: 'More & Guide', icon: '🗺️', link: '/more', color: 'bg-teal-100 text-teal-600' },
           ].map((cat, idx) => (
             <Link key={idx} to={cat.link} className={`p-6 rounded-2xl ${cat.color} hover:opacity-90 transition flex flex-col items-center justify-center gap-3 text-center h-40 group`}>
               <span className="text-4xl group-hover:scale-110 transition-transform duration-300">{cat.icon}</span>
@@ -198,7 +198,7 @@ const Home: React.FC = () => {
           </p>
         </div>
         <div className="flex flex-col gap-3 w-full md:w-auto relative z-10">
-          <Link to="/services" className="bg-dahab-gold text-black px-8 py-3 rounded-full font-bold hover:bg-yellow-400 transition text-center shadow-lg hover:shadow-yellow-500/20">
+          <Link to="/login?role=provider" className="bg-dahab-gold text-black px-8 py-3 rounded-full font-bold hover:bg-yellow-400 transition text-center shadow-lg hover:shadow-yellow-500/20">
             Register as Driver
           </Link>
           <span className="text-xs text-gray-500 text-center">Requires admin verification</span>

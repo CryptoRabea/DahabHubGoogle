@@ -28,7 +28,8 @@ const INITIAL_EVENTS: Event[] = [
     price: 1500,
     imageUrl: 'https://picsum.photos/800/600?random=1',
     organizerId: 'admin1',
-    category: 'Diving'
+    category: 'Diving',
+    status: 'approved'
   },
   {
     id: 'e2',
@@ -41,7 +42,8 @@ const INITIAL_EVENTS: Event[] = [
     price: 300,
     imageUrl: 'https://picsum.photos/800/600?random=2',
     organizerId: 'admin1',
-    category: 'Wellness'
+    category: 'Wellness',
+    status: 'approved'
   },
   {
     id: 'e3',
@@ -54,7 +56,8 @@ const INITIAL_EVENTS: Event[] = [
     price: 200,
     imageUrl: 'https://picsum.photos/800/600?random=3',
     organizerId: 'admin1',
-    category: 'Party'
+    category: 'Party',
+    status: 'approved'
   }
 ];
 
@@ -162,10 +165,29 @@ class MockDatabase {
     return this.getStorage<Event[]>('dahab_events', INITIAL_EVENTS);
   }
 
+  async getPublicEvents(): Promise<Event[]> {
+    const events = await this.getEvents();
+    return events.filter(e => e.status === 'approved');
+  }
+
   async addEvent(event: Event): Promise<void> {
     await delay(500);
     const events = await this.getEvents();
     this.setStorage('dahab_events', [event, ...events]);
+  }
+
+  async updateEvent(updatedEvent: Event): Promise<void> {
+    await delay(400);
+    const events = await this.getEvents();
+    const newEvents = events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+    this.setStorage('dahab_events', newEvents);
+  }
+
+  async deleteEvent(eventId: string): Promise<void> {
+    await delay(300);
+    const events = await this.getEvents();
+    const newEvents = events.filter(e => e.id !== eventId);
+    this.setStorage('dahab_events', newEvents);
   }
 
   // --- PROVIDERS ---

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import { db } from '../services/mockDatabase';
-import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Chrome, Loader2, Car } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -12,6 +12,7 @@ type AuthMode = 'login' | 'signup' | 'verify';
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   
@@ -23,8 +24,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     code: ''
   });
   const [isProviderSignup, setIsProviderSignup] = useState(false);
-
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam === 'provider') {
+      setMode('signup');
+      setIsProviderSignup(true);
+    }
+  }, [searchParams]);
 
   // Handlers
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
@@ -62,7 +70,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const user = await db.verifyAndCreateUser(formData.name, formData.email, formData.code, isProviderSignup);
       if (user) {
         onLogin(user);
-        navigate(user.role === UserRole.ADMIN ? '/admin' : '/');
+        if (user.role === UserRole.ADMIN) navigate('/admin');
+        else if (user.role === UserRole.PROVIDER) navigate('/provider-dashboard');
+        else navigate('/');
       } else {
         setError('Invalid verification code. Try "1234"');
         setLoading(false);
@@ -98,7 +108,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleDemoLogin = async (role: UserRole) => {
     const user = await db.login(role);
     onLogin(user);
-    navigate(role === UserRole.ADMIN ? '/admin' : '/');
+    if (role === UserRole.ADMIN) navigate('/admin');
+    else if (role === UserRole.PROVIDER) navigate('/provider-dashboard');
+    else navigate('/');
   };
 
   return (
@@ -108,13 +120,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         {/* Header Image/Color */}
         <div className="bg-gradient-to-r from-dahab-teal to-blue-500 p-8 text-center text-white">
           <h1 className="text-3xl font-bold mb-2">
-            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Join AmakenDahab' : 'Verify Email'}
+            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? (isProviderSignup ? 'Become a Partner' : 'Join AmakenDahab') : 'Verify Email'}
           </h1>
           <p className="opacity-90 text-sm">
             {mode === 'login' 
               ? 'Login to manage your bookings and events' 
               : mode === 'signup' 
-              ? 'Connect with the best of Dahab' 
+              ? (isProviderSignup ? 'List your services and events' : 'Connect with the best of Dahab') 
               : `We sent a code to ${formData.email}`
             }
           </p>
@@ -122,7 +134,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <div className="p-8">
           {/* Social Login Buttons (Only in Login/Signup) */}
-          {mode !== 'verify' && (
+          {mode !== 'verify' && !isProviderSignup && (
             <>
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <button 
@@ -164,7 +176,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  placeholder="Full Name"
+                  placeholder="Full Name / Business Name"
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-dahab-teal/50 transition"
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
@@ -199,8 +211,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
 
             {mode === 'signup' && (
-              <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
-                <div className={`w-5 h-5 rounded border flex items-center justify-center ${isProviderSignup ? 'bg-dahab-teal border-dahab-teal' : 'border-gray-300'}`}>
+              <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition ${isProviderSignup ? 'bg-teal-50 border-dahab-teal' : 'border-gray-200 hover:bg-gray-50'}`}>
+                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${isProviderSignup ? 'bg-dahab-teal border-dahab-teal' : 'border-gray-300'}`}>
                   {isProviderSignup && <Check size={14} className="text-white" />}
                 </div>
                 <input 
@@ -209,9 +221,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   onChange={e => setIsProviderSignup(e.target.checked)}
                   className="hidden"
                 />
-                <span className="text-sm text-gray-600 flex items-center gap-1">
-                  Register as Service Provider (Driver, etc.)
-                </span>
+                <div className="flex-1">
+                   <div className="font-bold text-gray-900 flex items-center gap-2">
+                     <Briefcase size={16} className={isProviderSignup ? "text-dahab-teal" : "text-gray-400"} />
+                     Register as Service Provider
+                   </div>
+                   <p className="text-xs text-gray-500 mt-1">Create events, offer driving services, or list your business. Requires admin approval.</p>
+                </div>
               </label>
             )}
 
@@ -241,7 +257,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               ) : (
                 <>
                   {mode === 'login' && 'Sign In'}
-                  {mode === 'signup' && 'Sign Up'}
+                  {mode === 'signup' && 'Create Account'}
                   {mode === 'verify' && 'Verify & Login'}
                   <ArrowRight size={18} />
                 </>
@@ -284,9 +300,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="mt-8 text-center space-y-2">
         <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Demo Access</p>
         <div className="flex gap-4 text-sm justify-center">
-          {/* Admin Demo Hidden as requested */}
-          <button onClick={() => handleDemoLogin(UserRole.PROVIDER)} className="text-dahab-teal hover:underline">
+           <button onClick={() => handleDemoLogin(UserRole.PROVIDER)} className="text-dahab-teal hover:underline">
             Driver Demo
+          </button>
+          <button onClick={() => handleDemoLogin(UserRole.ADMIN)} className="text-dahab-teal hover:underline">
+            Admin Demo
           </button>
         </div>
       </div>

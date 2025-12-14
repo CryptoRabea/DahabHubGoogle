@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users } from 'lucide-react';
+import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users, Menu, Briefcase } from 'lucide-react';
 import { UserRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -26,10 +26,14 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
         <Calendar size={24} />
         <span className="text-xs">Events</span>
       </Link>
-      <Link to="/community" className={`flex flex-col items-center gap-1 ${isActive('/community')}`}>
-        <Users size={24} />
-        <span className="text-xs">Community</span>
-      </Link>
+      
+      {userRole === UserRole.PROVIDER && (
+        <Link to="/provider-dashboard" className={`flex flex-col items-center gap-1 ${isActive('/provider-dashboard')}`}>
+          <Briefcase size={24} />
+          <span className="text-xs">Dash</span>
+        </Link>
+      )}
+
       {userRole === UserRole.ADMIN ? (
         <Link to="/admin" className={`flex flex-col items-center gap-1 ${isActive('/admin')}`}>
           <LayoutDashboard size={24} />
@@ -39,6 +43,13 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
         <Link to={userRole ? "/profile" : "/login"} className={`flex flex-col items-center gap-1 ${isActive(userRole ? '/profile' : '/login')}`}>
           <User size={24} />
           <span className="text-xs">{userRole ? 'Profile' : 'Login'}</span>
+        </Link>
+      )}
+      
+      {userRole !== UserRole.PROVIDER && userRole !== UserRole.ADMIN && (
+        <Link to="/more" className={`flex flex-col items-center gap-1 ${isActive('/more')}`}>
+          <Menu size={24} />
+          <span className="text-xs">More</span>
         </Link>
       )}
     </div>
@@ -61,6 +72,11 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
         <Link to="/events" className={`text-sm font-medium transition-colors ${isActive('/events')}`}>Events</Link>
         <Link to="/community" className={`text-sm font-medium transition-colors ${isActive('/community')}`}>Community Hub</Link>
         <Link to="/services" className={`text-sm font-medium transition-colors ${isActive('/services')}`}>Drivers & Services</Link>
+        <Link to="/more" className={`text-sm font-medium transition-colors ${isActive('/more')}`}>More</Link>
+        
+        {userRole === UserRole.PROVIDER && (
+           <Link to="/provider-dashboard" className={`text-sm font-medium transition-colors ${isActive('/provider-dashboard')}`}>Provider Dashboard</Link>
+        )}
         {userRole === UserRole.ADMIN && (
           <Link to="/admin" className={`text-sm font-medium transition-colors ${isActive('/admin')}`}>Admin Dashboard</Link>
         )}

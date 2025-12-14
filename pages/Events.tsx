@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Calendar, MapPin, Clock, Search, X, CalendarPlus, Heart, MessageSquare, Map as MapIcon, List, Download, ExternalLink } from 'lucide-react';
 import { Event, User } from '../types';
 import { db } from '../services/mockDatabase';
@@ -122,7 +122,11 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // URL Params for category
+  const [searchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState('All');
+  
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   
   // Reviews Modal State
@@ -130,11 +134,17 @@ const Events: React.FC<EventsProps> = ({ user, onToggleSave }) => {
   const [selectedEventForReview, setSelectedEventForReview] = useState<{id: string, title: string} | null>(null);
 
   useEffect(() => {
-    db.getEvents().then(data => {
+    // Initialize category from URL if present
+    const cat = searchParams.get('category');
+    if (cat && CATEGORIES.includes(cat)) {
+      setSelectedCategory(cat);
+    }
+
+    db.getPublicEvents().then(data => {
       setEvents(data);
       setLoading(false);
     });
-  }, []);
+  }, [searchParams]);
 
   const openReviews = (e: React.MouseEvent, event: Event) => {
     e.preventDefault(); 

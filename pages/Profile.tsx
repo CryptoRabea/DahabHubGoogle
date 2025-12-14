@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User, Event, Booking } from '../types';
 import { db } from '../services/mockDatabase';
-import { Mail, Shield, User as UserIcon, Calendar, MapPin, Heart, Clock } from 'lucide-react';
+import { Mail, Shield, User as UserIcon, Calendar, MapPin, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ProfileProps {
@@ -16,22 +16,25 @@ const Profile: React.FC<ProfileProps> = ({ user, onToggleSave }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      
-      // Fetch all events and filter (in a real app, you'd fetch by IDs)
-      const allEvents = await db.getEvents();
-      const saved = allEvents.filter(e => user.savedEventIds?.includes(e.id));
-      setSavedEvents(saved);
-
-      // Fetch bookings
-      const userBookings = await db.getUserBookings(user.id);
-      setBookings(userBookings);
-      
-      setLoading(false);
-    };
     fetchData();
   }, [user]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    
+    // Fetch all events
+    const allEvents = await db.getEvents();
+    
+    // Filter Saved
+    const saved = allEvents.filter(e => user.savedEventIds?.includes(e.id));
+    setSavedEvents(saved);
+
+    // Fetch bookings
+    const userBookings = await db.getUserBookings(user.id);
+    setBookings(userBookings);
+    
+    setLoading(false);
+  };
 
   return (
     <div className="space-y-8">
@@ -61,26 +64,26 @@ const Profile: React.FC<ProfileProps> = ({ user, onToggleSave }) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
         <button
           onClick={() => setActiveTab('saved')}
-          className={`px-6 py-3 font-medium text-sm transition border-b-2 ${
+          className={`px-6 py-3 font-medium text-sm transition border-b-2 whitespace-nowrap ${
             activeTab === 'saved' 
               ? 'border-dahab-teal text-dahab-teal' 
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
-          Saved Events ({user.savedEventIds?.length || 0})
+          Saved ({savedEvents.length})
         </button>
         <button
           onClick={() => setActiveTab('bookings')}
-          className={`px-6 py-3 font-medium text-sm transition border-b-2 ${
+          className={`px-6 py-3 font-medium text-sm transition border-b-2 whitespace-nowrap ${
             activeTab === 'bookings' 
               ? 'border-dahab-teal text-dahab-teal' 
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
-          My Bookings ({bookings.length})
+          Bookings ({bookings.length})
         </button>
       </div>
 

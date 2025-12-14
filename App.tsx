@@ -9,6 +9,8 @@ import Login from './pages/Login';
 import BookingPage from './pages/BookingPage';
 import Profile from './pages/Profile';
 import SocialHub from './pages/SocialHub';
+import More from './pages/More';
+import ProviderDashboard from './pages/ProviderDashboard';
 import AIChat from './components/AIChat';
 import { User, UserRole } from './types';
 import { db } from './services/mockDatabase';
@@ -99,12 +101,23 @@ const AppContent: React.FC = () => {
             <Route path="/events" element={<Events user={user} onToggleSave={handleToggleSave} />} />
             <Route path="/services" element={<Services user={user} />} />
             <Route path="/community" element={<SocialHub user={user} />} />
+            <Route path="/more" element={<More />} />
             
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/book/:type/:id" element={user ? <BookingPage user={user} /> : <Navigate to="/login" />} />
             
             <Route path="/profile" element={user ? <Profile user={user} onToggleSave={handleToggleSave} /> : <Navigate to="/login" />} />
             
+            {/* Provider Dashboard Route */}
+            <Route 
+              path="/provider-dashboard" 
+              element={
+                user?.role === UserRole.PROVIDER 
+                  ? <ProviderDashboard /> 
+                  : <Navigate to="/login" />
+              } 
+            />
+
             {/* Admin Route Protection */}
             <Route 
               path="/admin" 
