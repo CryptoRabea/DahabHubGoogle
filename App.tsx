@@ -20,6 +20,7 @@ import { ShieldAlert } from 'lucide-react';
 const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const { settings } = useSettings();
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   // Check for session in localstorage on load
   useEffect(() => {
@@ -28,6 +29,32 @@ const AppContent: React.FC = () => {
       setUser(JSON.parse(savedUser));
     }
   }, []);
+
+  // Handle PWA Install Prompt
+  useEffect(() => {
+    const handler = (e: any) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    // Show the install prompt
+    installPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+      setInstallPrompt(null);
+    }
+  };
 
   // Poll for user status updates (for verification)
   useEffect(() => {
@@ -85,7 +112,12 @@ const AppContent: React.FC = () => {
           backgroundRepeat: 'no-repeat'
         }}
       >
-        <Navbar userRole={user?.role || null} onLogout={handleLogout} />
+        <Navbar 
+          userRole={user?.role || null} 
+          onLogout={handleLogout} 
+          installPrompt={installPrompt}
+          onInstall={handleInstallClick}
+        />
 
         {/* Pending Verification Banner */}
         {user?.role === UserRole.PROVIDER && user?.providerStatus === 'pending' && (

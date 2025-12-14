@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users, Menu, Briefcase } from 'lucide-react';
+import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users, Menu, Briefcase, Download } from 'lucide-react';
 import { UserRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 
 interface NavbarProps {
   userRole: UserRole | null;
   onLogout: () => void;
+  installPrompt: any;
+  onInstall: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onInstall }) => {
   const location = useLocation();
   const { settings } = useSettings();
 
@@ -82,7 +84,16 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
         )}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 items-center">
+        {installPrompt && (
+          <button 
+            onClick={onInstall} 
+            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition text-sm font-bold shadow-md"
+          >
+            <Download size={16} /> Install App
+          </button>
+        )}
+
         {userRole ? (
           <>
              <Link to="/profile" className={`flex items-center gap-2 font-medium ${isActive('/profile')}`}>
@@ -105,6 +116,18 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout }) => {
     <>
       <DesktopNav />
       <MobileNav />
+      {/* Mobile Install Floater */}
+      {installPrompt && (
+        <div className="md:hidden fixed top-20 right-4 z-40 animate-fade-in">
+          <button 
+             onClick={onInstall}
+             className="bg-gray-900/90 backdrop-blur text-white p-3 rounded-full shadow-xl flex flex-col items-center gap-1"
+          >
+             <Download size={20} />
+             <span className="text-[10px] font-bold">Install</span>
+          </button>
+        </div>
+      )}
     </>
   );
 };
