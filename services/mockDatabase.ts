@@ -275,27 +275,99 @@ class MockDatabase {
     await delay(200);
   }
 
+  // --- USER MANAGEMENT ---
+  async getUsers(): Promise<User[]> {
+    return this.getStorage<User[]>('dahab_users', []);
+  }
+
+  async getUser(userId: string): Promise<User | undefined> {
+    const users = await this.getUsers();
+    return users.find(u => u.id === userId);
+  }
+
+  async getPendingProviders(): Promise<User[]> {
+    await delay(300);
+    const users = await this.getUsers();
+    return users.filter(u => u.role === UserRole.PROVIDER && u.providerStatus === 'pending');
+  }
+
+  async approveProvider(userId: string): Promise<User | null> {
+    await delay(500);
+    const users = await this.getUsers();
+    let approvedUser: User | null = null;
+    
+    const updatedUsers = users.map(u => {
+      if (u.id === userId) {
+        approvedUser = { ...u, providerStatus: 'approved' };
+        return approvedUser;
+      }
+      return u;
+    });
+    this.setStorage('dahab_users', updatedUsers);
+    
+    // Create public ServiceProvider profile
+    if (approvedUser) {
+      const providers = await this.getProviders();
+      // Avoid duplicate entries
+      if (!providers.find(p => p.id === userId)) {
+        const newProvider: ServiceProvider = {
+          id: userId,
+          name: (approvedUser as User).name,
+          serviceType: 'Driver', // Default, editable later
+          description: 'Verified service provider',
+          phone: '',
+          rating: 5.0,
+          imageUrl: 'https://picsum.photos/200/200?random=' + userId,
+          isVerified: true
+        };
+        this.setStorage('dahab_providers', [...providers, newProvider]);
+      }
+    }
+    
+    return approvedUser;
+  }
+  
+  async rejectProvider(userId: string): Promise<void> {
+    await delay(300);
+    const users = await this.getUsers();
+    const updatedUsers = users.map(u => {
+      if (u.id === userId) {
+        return { ...u, role: UserRole.USER, providerStatus: 'rejected' as const };
+      }
+      return u;
+    });
+    this.setStorage('dahab_users', updatedUsers);
+  }
+
   // --- AUTH ---
   async sendVerificationCode(email: string): Promise<boolean> {
     await delay(1000);
     return true;
   }
 
-  async verifyAndCreateUser(name: string, email: string, code: string): Promise<User | null> {
+  async verifyAndCreateUser(name: string, email: string, code: string, isProviderSignup: boolean = false): Promise<User | null> {
     await delay(1000);
     if (code === '1234') {
       const isAdmin = name.trim() === 'RahmaOrganizer' || name.trim() === 'Rahma Organizer';
-      const isProvider = name.trim().toLowerCase().includes('taxi') || name.trim().toLowerCase().includes('camp');
       
+      const role = isAdmin ? UserRole.ADMIN : isProviderSignup ? UserRole.PROVIDER : UserRole.USER;
+      const providerStatus = isProviderSignup ? 'pending' : undefined;
+
       const newUser: User = {
         id: Math.random().toString(36).substr(2, 9),
         name,
         email,
-        role: isAdmin ? UserRole.ADMIN : isProvider ? UserRole.PROVIDER : UserRole.USER,
+        role: role,
+        providerStatus: providerStatus,
         isEmailVerified: true,
         provider: 'email',
         savedEventIds: []
       };
+
+      // Persist user for admin to see
+      const users = await this.getUsers();
+      this.setStorage('dahab_users', [...users, newUser]);
+
       return newUser;
     }
     return null;
@@ -303,7 +375,7 @@ class MockDatabase {
 
   async socialLogin(provider: 'google' | 'facebook'): Promise<User> {
     await delay(1500); 
-    return {
+    const user = {
       id: Math.random().toString(36).substr(2, 9),
       name: provider === 'google' ? 'Google User' : 'Facebook User',
       email: provider === 'google' ? 'user@gmail.com' : 'user@facebook.com',
@@ -312,14 +384,20 @@ class MockDatabase {
       provider: provider,
       savedEventIds: []
     };
+    // Persist
+    const users = await this.getUsers();
+    this.setStorage('dahab_users', [...users, user]);
+    return user;
   }
 
   async login(role: UserRole): Promise<User> {
     await delay(500);
+    // Return approved demo users
     return {
       id: role === UserRole.ADMIN ? 'admin1' : role === UserRole.PROVIDER ? 'p1' : 'user1',
       name: role === UserRole.ADMIN ? 'Rahma Organizer' : role === UserRole.PROVIDER ? 'Ahmed Taxi' : 'Dahab Explorer',
       role: role,
+      providerStatus: role === UserRole.PROVIDER ? 'approved' : undefined,
       email: role === UserRole.ADMIN ? 'admin@dahabhub.com' : 'user@gmail.com',
       isEmailVerified: true,
       provider: 'email',

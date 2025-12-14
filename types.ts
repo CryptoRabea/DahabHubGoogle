@@ -26,6 +26,7 @@ export interface User {
   id: string;
   name: string;
   role: UserRole;
+  providerStatus?: 'pending' | 'approved' | 'rejected';
   email: string;
   isEmailVerified?: boolean;
   provider?: 'email' | 'google' | 'facebook';

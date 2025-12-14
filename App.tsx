@@ -13,6 +13,7 @@ import AIChat from './components/AIChat';
 import { User, UserRole } from './types';
 import { db } from './services/mockDatabase';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
+import { ShieldAlert } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -25,6 +26,21 @@ const AppContent: React.FC = () => {
       setUser(JSON.parse(savedUser));
     }
   }, []);
+
+  // Poll for user status updates (for verification)
+  useEffect(() => {
+    if (user && user.role === UserRole.PROVIDER && user.providerStatus === 'pending') {
+      const interval = setInterval(async () => {
+        const updatedUser = await db.getUser(user.id);
+        if (updatedUser && updatedUser.providerStatus !== user.providerStatus) {
+          // Status changed! Update local state
+          setUser(updatedUser);
+          localStorage.setItem('dahab_user', JSON.stringify(updatedUser));
+        }
+      }, 5000); // Check every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const handleLogin = (user: User) => {
     setUser(user);
@@ -68,6 +84,14 @@ const AppContent: React.FC = () => {
         }}
       >
         <Navbar userRole={user?.role || null} onLogout={handleLogout} />
+
+        {/* Pending Verification Banner */}
+        {user?.role === UserRole.PROVIDER && user?.providerStatus === 'pending' && (
+          <div className="bg-yellow-500 text-white px-4 py-2 text-center text-sm font-bold shadow-md flex items-center justify-center gap-2">
+            <ShieldAlert size={16} />
+            <span>Your provider account is pending admin verification. You can browse as a user until approved.</span>
+          </div>
+        )}
         
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Routes>

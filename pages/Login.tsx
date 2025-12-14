@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import { db } from '../services/mockDatabase';
-import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Chrome, Loader2 } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Chrome, Loader2, Car } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -22,6 +22,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     password: '',
     code: ''
   });
+  const [isProviderSignup, setIsProviderSignup] = useState(false);
 
   const [error, setError] = useState('');
 
@@ -58,7 +59,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     else if (mode === 'verify') {
       // Step 2: Verify Code
       setLoading(true);
-      const user = await db.verifyAndCreateUser(formData.name, formData.email, formData.code);
+      const user = await db.verifyAndCreateUser(formData.name, formData.email, formData.code, isProviderSignup);
       if (user) {
         onLogin(user);
         navigate(user.role === UserRole.ADMIN ? '/admin' : '/');
@@ -195,6 +196,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   />
                 </div>
               </>
+            )}
+
+            {mode === 'signup' && (
+              <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                <div className={`w-5 h-5 rounded border flex items-center justify-center ${isProviderSignup ? 'bg-dahab-teal border-dahab-teal' : 'border-gray-300'}`}>
+                  {isProviderSignup && <Check size={14} className="text-white" />}
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={isProviderSignup}
+                  onChange={e => setIsProviderSignup(e.target.checked)}
+                  className="hidden"
+                />
+                <span className="text-sm text-gray-600 flex items-center gap-1">
+                  Register as Service Provider (Driver, etc.)
+                </span>
+              </label>
             )}
 
             {mode === 'verify' && (

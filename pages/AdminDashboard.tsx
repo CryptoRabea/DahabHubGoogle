@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../services/mockDatabase';
-import { Booking, BookingStatus, Event } from '../types';
-import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings } from 'lucide-react';
+import { Booking, BookingStatus, Event, User, UserRole } from '../types';
+import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 const PRESET_BACKGROUNDS = [
@@ -14,8 +14,9 @@ const PRESET_BACKGROUNDS = [
 
 const AdminDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [pendingProviders, setPendingProviders] = useState<User[]>([]);
   const [newEventTitle, setNewEventTitle] = useState('');
-  const [activeTab, setActiveTab] = useState<'bookings' | 'events' | 'settings'>('bookings');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'events' | 'verifications' | 'settings'>('bookings');
   
   // Settings Hook
   const { settings, updateSettings } = useSettings();
@@ -35,10 +36,21 @@ const AdminDashboard: React.FC = () => {
   const loadData = async () => {
     const b = await db.getBookings();
     setBookings(b);
+    const p = await db.getPendingProviders();
+    setPendingProviders(p);
   };
 
   const handleBookingAction = async (id: string, status: BookingStatus) => {
     await db.updateBookingStatus(id, status);
+    loadData();
+  };
+
+  const handleProviderAction = async (userId: string, approve: boolean) => {
+    if (approve) {
+      await db.approveProvider(userId);
+    } else {
+      await db.rejectProvider(userId);
+    }
     loadData();
   };
 
@@ -105,6 +117,13 @@ const AdminDashboard: React.FC = () => {
           >
             Bookings ({bookings.filter(b => b.status === BookingStatus.PENDING).length})
           </button>
+           <button 
+            onClick={() => setActiveTab('verifications')}
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 ${activeTab === 'verifications' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
+          >
+            Verifications
+            {pendingProviders.length > 0 && <span className="bg-red-500 text-white text-xs px-1.5 rounded-full">{pendingProviders.length}</span>}
+          </button>
           <button 
             onClick={() => setActiveTab('events')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${activeTab === 'events' ? 'bg-dahab-teal text-white' : 'bg-white'}`}
@@ -162,6 +181,57 @@ const AdminDashboard: React.FC = () => {
                           {booking.status.toUpperCase()}
                         </span>
                       )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'verifications' && (
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-2">
+            <UserCheck className="text-dahab-teal" />
+            <h3 className="font-bold">Pending Provider Applications</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-sm uppercase">
+                <tr>
+                  <th className="p-4">Name</th>
+                  <th className="p-4">Email</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {pendingProviders.length === 0 && (
+                  <tr><td colSpan={4} className="p-8 text-center text-gray-400">No pending verifications</td></tr>
+                )}
+                {pendingProviders.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="p-4 font-bold">{user.name}</td>
+                    <td className="p-4 text-gray-600">{user.email}</td>
+                    <td className="p-4">
+                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold flex items-center w-fit gap-1">
+                        <ShieldAlert size={12} /> Pending Review
+                      </span>
+                    </td>
+                    <td className="p-4 flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleProviderAction(user.id, true)}
+                        className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 flex items-center gap-1"
+                      >
+                        <Check size={14} /> Approve
+                      </button>
+                      <button 
+                        onClick={() => handleProviderAction(user.id, false)}
+                        className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300 flex items-center gap-1"
+                      >
+                        <X size={14} /> Reject
+                      </button>
                     </td>
                   </tr>
                 ))}

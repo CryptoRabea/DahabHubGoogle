@@ -248,7 +248,11 @@ const PostCard: React.FC<{
     setIsSubmittingComment(false);
   };
 
-  const getRoleBadge = (role: UserRole) => {
+  const getRoleBadge = (role: UserRole, authorId: string) => {
+    // Only show provider badge if explicitly set (we don't check verification status on old posts for now, 
+    // but ideally we should propagate user status to posts or fetch user info)
+    // For simplicity, we assume 'PROVIDER' role on a post author means they were approved at the time.
+    
     switch (role) {
       case UserRole.ADMIN:
         return <span className="bg-dahab-gold text-black text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><ShieldCheck size={10} /> ADMIN</span>;
@@ -270,7 +274,7 @@ const PostCard: React.FC<{
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-gray-900">{post.authorName}</h3>
-              {getRoleBadge(post.authorRole)}
+              {getRoleBadge(post.authorRole, post.authorId)}
             </div>
             <p className="text-xs text-gray-400">{new Date(post.timestamp).toLocaleDateString()} at {new Date(post.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
           </div>

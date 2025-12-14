@@ -102,8 +102,8 @@ const Home: React.FC = () => {
           {[
             { title: 'Events & Parties', icon: '🎉', link: '/events', color: 'bg-purple-100 text-purple-600' },
             { title: 'Drivers', icon: '🚕', link: '/services', color: 'bg-yellow-100 text-yellow-600' },
-            { title: 'Diving', icon: '🤿', link: '/events', color: 'bg-blue-100 text-blue-600' },
-            { title: 'Wellness', icon: '🧘‍♀️', link: '/events', color: 'bg-green-100 text-green-600' },
+            { title: 'Morning Events', icon: '☀️', link: '/events', color: 'bg-orange-100 text-orange-600' },
+            { title: 'Night Events', icon: '🌙', link: '/events', color: 'bg-indigo-100 text-indigo-600' },
           ].map((cat, idx) => (
             <Link key={idx} to={cat.link} className={`p-6 rounded-2xl ${cat.color} hover:opacity-90 transition flex flex-col items-center justify-center gap-3 text-center h-40 group`}>
               <span className="text-4xl group-hover:scale-110 transition-transform duration-300">{cat.icon}</span>
