@@ -1,7 +1,8 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
 
 // Increment this version to force a data reset on client browsers
-const DB_VERSION = '1.2'; 
+// Updated to 1.3 to fix broken image URLs from previous cache
+const DB_VERSION = '1.3'; 
 
 // Default settings if none exist in DB
 const INITIAL_SETTINGS: AppSettings = {
