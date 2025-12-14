@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Calendar, Car, User, LayoutDashboard, LogOut, Users, Menu, Briefcase, Download } from 'lucide-react';
 import { UserRole } from '../types';
@@ -14,44 +14,86 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onInstall }) => {
   const location = useLocation();
   const { settings } = useSettings();
+  const [logoError, setLogoError] = useState(false);
 
   const isActive = (path: string) => location.pathname === path ? "text-dahab-teal font-bold" : "text-gray-500 hover:text-dahab-teal";
 
+  // Brand Logo Logic: Show image if available and not broken, otherwise show text
+  const BrandLogo = ({ className = "h-10" }: { className?: string }) => {
+    if (settings.logoUrl && !logoError) {
+      return (
+        <img 
+          src={settings.logoUrl} 
+          alt={settings.appName} 
+          className={`${className} w-auto object-contain`} 
+          onError={() => setLogoError(true)}
+        />
+      );
+    }
+    return (
+      <span className="font-bold text-xl text-dahab-teal tracking-tight">
+        {settings.appName}
+      </span>
+    );
+  };
+
+  // Mobile Top Bar (Logo + Auth Buttons)
+  const MobileTopBar = () => (
+    <div className="md:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 px-4 py-3 flex justify-between items-center pt-safe">
+       <Link to="/" className="flex items-center gap-2">
+          <BrandLogo className="h-8" />
+       </Link>
+       
+       {!userRole && (
+         <div className="flex gap-2">
+           <Link to="/login" className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-full hover:bg-gray-50">Login</Link>
+           <Link to="/login?mode=signup" className="px-3 py-1.5 text-xs font-bold bg-dahab-teal text-white rounded-full hover:bg-teal-700 shadow-sm">Sign Up</Link>
+         </div>
+       )}
+
+       {installPrompt && (
+          <button onClick={onInstall} className="text-gray-900 bg-gray-100 p-2 rounded-full">
+            <Download size={16} />
+          </button>
+       )}
+    </div>
+  );
+
   // Bottom Nav for Mobile
-  const MobileNav = () => (
+  const MobileBottomNav = () => (
     <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 py-3 px-6 flex justify-between items-center z-50 md:hidden pb-safe">
       <Link to="/" className={`flex flex-col items-center gap-1 ${isActive('/')}`}>
         <Home size={24} />
-        <span className="text-xs">Home</span>
+        <span className="text-[10px] font-medium">Home</span>
       </Link>
       <Link to="/events" className={`flex flex-col items-center gap-1 ${isActive('/events')}`}>
         <Calendar size={24} />
-        <span className="text-xs">Events</span>
+        <span className="text-[10px] font-medium">Events</span>
       </Link>
       
       {userRole === UserRole.PROVIDER && (
         <Link to="/provider-dashboard" className={`flex flex-col items-center gap-1 ${isActive('/provider-dashboard')}`}>
           <Briefcase size={24} />
-          <span className="text-xs">Dash</span>
+          <span className="text-[10px] font-medium">Dash</span>
         </Link>
       )}
 
       {userRole === UserRole.ADMIN ? (
         <Link to="/admin" className={`flex flex-col items-center gap-1 ${isActive('/admin')}`}>
           <LayoutDashboard size={24} />
-          <span className="text-xs">Admin</span>
+          <span className="text-[10px] font-medium">Admin</span>
         </Link>
       ) : (
         <Link to={userRole ? "/profile" : "/login"} className={`flex flex-col items-center gap-1 ${isActive(userRole ? '/profile' : '/login')}`}>
           <User size={24} />
-          <span className="text-xs">{userRole ? 'Profile' : 'Login'}</span>
+          <span className="text-[10px] font-medium">{userRole ? 'Profile' : 'Login'}</span>
         </Link>
       )}
       
       {userRole !== UserRole.PROVIDER && userRole !== UserRole.ADMIN && (
         <Link to="/more" className={`flex flex-col items-center gap-1 ${isActive('/more')}`}>
           <Menu size={24} />
-          <span className="text-xs">More</span>
+          <span className="text-[10px] font-medium">More</span>
         </Link>
       )}
     </div>
@@ -61,12 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
   const DesktopNav = () => (
     <div className="hidden md:flex fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50 px-8 py-4 justify-between items-center pt-safe">
       <Link to="/" className="text-2xl font-bold text-dahab-teal tracking-tight flex items-center gap-3">
-        {settings.logoUrl ? (
-          <img src={settings.logoUrl} alt={settings.appName} className="h-10 w-auto object-contain" />
-        ) : (
-          <span className="bg-dahab-gold text-white p-1 rounded-lg">AD</span> 
-        )}
-        <span>{settings.appName}</span>
+        <BrandLogo />
       </Link>
       
       <div className="flex gap-8 items-center">
@@ -120,19 +157,8 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
   return (
     <>
       <DesktopNav />
-      <MobileNav />
-      {/* Mobile Install Floater */}
-      {installPrompt && (
-        <div className="md:hidden fixed top-20 right-4 z-40 animate-fade-in">
-          <button 
-             onClick={onInstall}
-             className="bg-gray-900/90 backdrop-blur text-white p-3 rounded-full shadow-xl flex flex-col items-center gap-1"
-          >
-             <Download size={20} />
-             <span className="text-[10px] font-bold">Install</span>
-          </button>
-        </div>
-      )}
+      <MobileTopBar />
+      <MobileBottomNav />
     </>
   );
 };

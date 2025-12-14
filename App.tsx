@@ -63,19 +63,28 @@ const AppContent: React.FC = () => {
   };
 
   // Poll for user status updates (for verification)
+  // Fix: Use specific dependencies to prevent interval reset on unrelated state changes
   useEffect(() => {
-    if (user && user.role === UserRole.PROVIDER && user.providerStatus === 'pending') {
+    const userId = user?.id;
+    const isPendingProvider = user?.role === UserRole.PROVIDER && user?.providerStatus === 'pending';
+
+    if (userId && isPendingProvider) {
       const interval = setInterval(async () => {
-        const updatedUser = await db.getUser(user.id);
-        if (updatedUser && updatedUser.providerStatus !== user.providerStatus) {
-          // Status changed! Update local state
-          setUser(updatedUser);
-          localStorage.setItem('dahab_user', JSON.stringify(updatedUser));
+        try {
+          const updatedUser = await db.getUser(userId);
+          // Only update if status has actually changed to avoid loop
+          if (updatedUser && updatedUser.providerStatus !== 'pending') {
+            setUser(updatedUser);
+            localStorage.setItem('dahab_user', JSON.stringify(updatedUser));
+          }
+        } catch (error) {
+          console.error("Polling error", error);
         }
       }, 5000); // Check every 5 seconds
+      
       return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user?.id, user?.role, user?.providerStatus]);
 
   const handleLogin = (user: User) => {
     setUser(user);
@@ -109,8 +118,9 @@ const AppContent: React.FC = () => {
 
   return (
     <HashRouter>
+      {/* Updated padding: pt-20 to ensure content clears both mobile top bar and desktop navbar */}
       <div 
-        className={`min-h-screen pb-20 md:pb-0 md:pt-20 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
+        className={`min-h-screen pb-20 pt-20 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
         style={{
           backgroundImage: settings.backgroundStyle,
           backgroundAttachment: 'fixed',
