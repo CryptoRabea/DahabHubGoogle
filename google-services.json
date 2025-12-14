@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "387597558330",
+    "project_id": "dahabservicehub",
+    "storage_bucket": "dahabservicehub.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:387597558330:android:7de2ffa0768abb70a88b03",
+        "android_client_info": {
+          "package_name": "com.CRG.amakendahab"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCOpKl4nk9yQPinq94kjxpewe2MVz35lc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
