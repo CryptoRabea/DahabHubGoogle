@@ -1,7 +1,25 @@
-import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings } from '../types';
+
+import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings, NavItem, HomeSection } from '../types';
 
 // Increment this version to force a data reset on client browsers
-const DB_VERSION = '2.0'; 
+const DB_VERSION = '2.2'; 
+
+// Default Navigation
+const DEFAULT_NAV: NavItem[] = [
+  { id: 'nav-1', label: 'Home', path: '/', icon: 'Home', order: 1, isVisible: true },
+  { id: 'nav-2', label: 'Events', path: '/events', icon: 'Calendar', order: 2, isVisible: true },
+  { id: 'nav-3', label: 'Services', path: '/services', icon: 'Car', order: 3, isVisible: true },
+  { id: 'nav-4', label: 'Community', path: '/community', icon: 'Users', order: 4, isVisible: true },
+  { id: 'nav-5', label: 'More', path: '/more', icon: 'Menu', order: 5, isVisible: true },
+];
+
+// Default Home Page Layout
+const DEFAULT_HOME_LAYOUT: HomeSection[] = [
+  { id: 'sec-1', type: 'hero', order: 1, isVisible: true },
+  { id: 'sec-2', type: 'categories', order: 2, isVisible: true },
+  { id: 'sec-3', type: 'featured', order: 3, isVisible: true },
+  { id: 'sec-4', type: 'banner', order: 4, isVisible: true },
+];
 
 // Default settings if none exist in DB
 const INITIAL_SETTINGS: AppSettings = {
@@ -13,7 +31,9 @@ const INITIAL_SETTINGS: AppSettings = {
     "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1920&auto=format&fit=crop"
   ],
   backgroundStyle: 'linear-gradient(to bottom, #0f172a, #1e293b)',
-  contentOverrides: {}
+  contentOverrides: {},
+  navigation: DEFAULT_NAV,
+  homeLayout: DEFAULT_HOME_LAYOUT
 };
 
 // Seed Data for initial load
@@ -210,7 +230,9 @@ class DatabaseService {
   async getSettings(): Promise<AppSettings> {
     await delay(100);
     const settings = getItem<AppSettings>('settings', INITIAL_SETTINGS);
-    // Ensure contentOverrides exists
+    // Ensure structure exists (migration)
+    if (!settings.navigation) settings.navigation = DEFAULT_NAV;
+    if (!settings.homeLayout) settings.homeLayout = DEFAULT_HOME_LAYOUT;
     if (!settings.contentOverrides) settings.contentOverrides = {};
     return settings;
   }

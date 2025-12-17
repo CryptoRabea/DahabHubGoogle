@@ -16,12 +16,35 @@ export enum PaymentMethod {
   INSTAPAY = 'Instapay'
 }
 
+// --- Dynamic UI Types ---
+export interface NavItem {
+  id: string;
+  label: string;
+  path: string;
+  icon: string; // Icon name string (e.g., 'Home', 'Calendar')
+  order: number;
+  isVisible: boolean;
+}
+
+export interface HomeSection {
+  id: string;
+  type: 'hero' | 'categories' | 'featured' | 'banner' | 'text';
+  order: number;
+  isVisible: boolean;
+  data?: any; // For custom titles, buttons configs, etc.
+}
+// ------------------------
+
 export interface AppSettings {
   appName: string;
   logoUrl: string; // Base64 or URL
   heroImages: string[];
   backgroundStyle: string; // CSS background value
   contentOverrides: { [key: string]: string }; // Key-Value pair for text/image replacements
+  
+  // New Dynamic Configs
+  navigation: NavItem[];
+  homeLayout: HomeSection[];
 }
 
 export interface User {

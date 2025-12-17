@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState, useRef } from 'react';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { Booking, BookingStatus, Event, User, UserRole } from '../types';
 import { Check, X, Plus, Image as ImageIcon, Trash2, Upload, Palette, Settings, UserCheck, ShieldAlert, Edit2, Calendar, Clock, AlertCircle, Star, LogOut, DollarSign, ExternalLink } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
@@ -218,7 +219,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       </span>
                     </td>
                     <td className="p-4">{booking.amount} EGP <br/><span className="text-xs text-gray-400">{booking.method}</span></td>
-                    <td className="p-4 text-blue-600 text-sm underline cursor-pointer">View Receipt</td>
+                    <td className="p-4 text-blue-600 text-sm underline cursor-pointer">
+                        {booking.receiptImage && (
+                             <a href={booking.receiptImage} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1 text-sm underline">
+                                 <ExternalLink size={14} /> View Receipt
+                             </a>
+                        )}
+                    </td>
                     <td className="p-4 flex justify-end gap-2">
                       {booking.status === BookingStatus.PENDING ? (
                         <>

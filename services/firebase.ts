@@ -1,13 +1,28 @@
-// This file mocks the Firebase services to allow the application to run without the firebase dependency installed.
-// Real Firebase initialization has been removed to fix "Module not found" errors in the current environment.
 
-export const auth = {} as any;
-export const googleProvider = {} as any;
-export const dbFirestore = {} as any;
-export const storage = {} as any;
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
-// Mock functions in case they are imported directly (though mockDatabase.ts refactor should remove the need for these)
-export const initializeApp = () => {};
-export const getAuth = () => {};
-export const getFirestore = () => {};
-export const getStorage = () => {};
+// Access environment variables using import.meta.env (standard Vite)
+// Casting to 'any' ensures we don't hit TS errors if vite-env.d.ts is missing types
+const env = (import.meta as any).env || {};
+
+const firebaseConfig = {
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Export services
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+export const facebookProvider = new FacebookAuthProvider();
+export const dbFirestore = getFirestore(app);
+export const storage = getStorage(app);

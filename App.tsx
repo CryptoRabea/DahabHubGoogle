@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -14,7 +15,7 @@ import ProviderDashboard from './pages/ProviderDashboard';
 import AIChat from './components/AIChat';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import { User, UserRole } from './types';
-import { db } from './services/mockDatabase';
+import { db } from './services/database';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ShieldAlert, Edit3, Eye } from 'lucide-react';
 
@@ -117,12 +118,15 @@ const AppContent: React.FC = () => {
   return (
     <HashRouter>
       <div 
-        className={`min-h-screen pb-20 pt-20 pt-safe ${textColorClass} transition-all duration-500 ease-in-out`}
+        className={`min-h-screen pb-20 ${textColorClass} transition-all duration-500 ease-in-out`}
         style={{
           backgroundImage: settings.backgroundStyle,
           backgroundAttachment: 'fixed',
           backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          // Use calc to ensure padding accounts for both the navbar height (approx 6rem to be safe) AND safe area
+          // This prevents the conflict between utility classes like pt-20 and custom classes like pt-safe
+          paddingTop: 'calc(6rem + env(safe-area-inset-top))'
         }}
       >
         <Navbar 
@@ -176,11 +180,11 @@ const AppContent: React.FC = () => {
         <AIChat />
         <IOSInstallPrompt />
 
-        {/* Admin Edit Mode Toggle */}
+        {/* Admin Edit Mode Toggle - Moved to LEFT side to avoid overlap with AI Chat FAB */}
         {user?.role === UserRole.ADMIN && (
           <button 
             onClick={toggleEditing}
-            className={`fixed bottom-24 right-4 md:right-10 p-4 rounded-full shadow-xl z-50 transition-all transform hover:scale-105 ${isEditing ? 'bg-orange-500 text-white' : 'bg-gray-900 text-white'}`}
+            className={`fixed bottom-24 left-4 md:left-10 p-4 rounded-full shadow-xl z-50 transition-all transform hover:scale-105 ${isEditing ? 'bg-orange-500 text-white' : 'bg-gray-900 text-white'}`}
             title={isEditing ? "Exit Edit Mode" : "Enter Edit Mode"}
           >
             {isEditing ? <Eye size={24} /> : <Edit3 size={24} />}

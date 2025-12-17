@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Upload, Smartphone, ArrowRight, Loader2, MapPin } from 'lucide-react';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { User, Event, ServiceProvider, BookingStatus, PaymentMethod } from '../types';
 import EventMap from '../components/EventMap';
 
@@ -32,24 +33,31 @@ const BookingPage: React.FC<BookingPageProps> = ({ user }) => {
   }, [type, id]);
 
   const handleSubmit = async () => {
-    if (!item) return;
+    if (!item || !file) return;
     setIsSubmitting(true);
     
-    // Simulate API call
-    await db.createBooking({
-      id: Math.random().toString(36).substr(2, 9),
-      itemId: item.id,
-      itemType: type as 'event' | 'service',
-      userId: user.id,
-      userName: user.name,
-      amount: 'price' in item ? item.price : 100, // Default 100 for service base fee
-      method: paymentMethod,
-      status: BookingStatus.PENDING,
-      timestamp: new Date().toISOString()
-    });
+    // Convert file to base64 for service upload method which will handle upload
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        
+        await db.createBooking({
+            id: Math.random().toString(36).substr(2, 9),
+            itemId: item.id,
+            itemType: type as 'event' | 'service',
+            userId: user.id,
+            userName: user.name,
+            amount: 'price' in item ? item.price : 100, // Default 100 for service base fee
+            method: paymentMethod,
+            status: BookingStatus.PENDING,
+            timestamp: new Date().toISOString(),
+            receiptImage: base64
+        });
 
-    setStep(3);
-    setIsSubmitting(false);
+        setStep(3);
+        setIsSubmitting(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   if (!item) return <div className="p-8 text-center">Item not found</div>;

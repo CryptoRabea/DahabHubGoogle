@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User, UserRole } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 

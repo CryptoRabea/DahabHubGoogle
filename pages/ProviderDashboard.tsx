@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { User, Event, UserRole, Booking } from '../types';
-import { db } from '../services/mockDatabase';
+import { db } from '../services/database';
 import { Plus, Clock, CheckCircle, XCircle, Calendar, MapPin, Edit2, Trash2, Eye, BarChart3, Users, DollarSign, ShieldAlert, LogOut, Upload, Loader2, Smartphone } from 'lucide-react';
 import EventFormModal from '../components/EventFormModal';
 import { useNavigate } from 'react-router-dom';
@@ -90,7 +91,7 @@ const ProviderDashboard: React.FC<ProviderDashboardProps> = ({ onLogout }) => {
   const handlePaymentSubmit = async () => {
     if(!user || !paymentFile) return;
     setIsSubmittingPayment(true);
-    // Simulate upload
+    // Convert file to base64 for database service to handle upload
     const reader = new FileReader();
     reader.onloadend = async () => {
         const base64 = reader.result as string;
