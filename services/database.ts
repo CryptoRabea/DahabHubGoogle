@@ -11,8 +11,9 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, dbFirestore, storage, googleProvider, facebookProvider } from './firebase';
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings, NavItem, HomeSection } from '../types';
+import { db as mockDb } from './mockDatabase';
 
-// Default Data for Initialization
+// Default Data for Initialization (Used when creating new settings in Firebase)
 const DEFAULT_NAV: NavItem[] = [
   { id: 'nav-1', label: 'Home', path: '/', icon: 'Home', order: 1, isVisible: true },
   { id: 'nav-2', label: 'Events', path: '/events', icon: 'Calendar', order: 2, isVisible: true },
@@ -47,6 +48,12 @@ const uploadImageIfBase64 = async (path: string, urlOrBase64: string | undefined
     if (!urlOrBase64) return undefined;
     if (urlOrBase64.startsWith('http')) return urlOrBase64;
     
+    // Fallback if storage is not initialized
+    if (!storage) {
+        console.warn("Storage not initialized, skipping image upload");
+        return urlOrBase64; 
+    }
+    
     try {
         const storageRef = ref(storage, `${path}/${Date.now()}_${Math.random().toString(36).substr(2,9)}`);
         const response = await fetch(urlOrBase64);
@@ -58,8 +65,6 @@ const uploadImageIfBase64 = async (path: string, urlOrBase64: string | undefined
         return urlOrBase64; // Fallback
     }
 };
-
-const mapDoc = <T>(doc: any): T => ({ id: doc.id, ...doc.data() });
 
 class DatabaseService {
   
@@ -367,4 +372,10 @@ class DatabaseService {
   }
 }
 
-export const db = new DatabaseService();
+// Fallback logic: If auth is undefined (due to missing API key), export mock DB
+const useMock = !auth;
+if (useMock) {
+    console.log("DatabaseService: Falling back to Mock Database");
+}
+
+export const db = useMock ? mockDb : new DatabaseService();

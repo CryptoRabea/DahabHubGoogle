@@ -4,25 +4,40 @@ import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Access environment variables using import.meta.env (standard Vite)
-// Casting to 'any' ensures we don't hit TS errors if vite-env.d.ts is missing types
-const env = (import.meta as any).env || {};
+// Use process.env which is explicitly defined in vite.config.ts
+const apiKey = process.env.VITE_FIREBASE_API_KEY;
 
-const firebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: env.VITE_FIREBASE_APP_ID
-};
+let app;
+let auth: any;
+let googleProvider: any;
+let facebookProvider: any;
+let dbFirestore: any;
+let storage: any;
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Only initialize if we have a valid key (not undefined and not a placeholder)
+if (apiKey && apiKey.length > 0) {
+  const firebaseConfig = {
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.VITE_FIREBASE_APP_ID
+  };
 
-// Export services
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-export const facebookProvider = new FacebookAuthProvider();
-export const dbFirestore = getFirestore(app);
-export const storage = getStorage(app);
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
+    facebookProvider = new FacebookAuthProvider();
+    dbFirestore = getFirestore(app);
+    storage = getStorage(app);
+  } catch (error) {
+    console.warn("Firebase initialization failed, likely due to invalid config. Falling back to mock.", error);
+  }
+} else {
+  console.log("No Firebase API key found. Using Mock Database.");
+}
+
+// Export services (can be undefined if config is missing)
+export { auth, googleProvider, facebookProvider, dbFirestore, storage };
