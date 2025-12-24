@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import { db } from '../services/database';
-import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Check, Facebook, Loader2, Briefcase, AlertCircle, FileText } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import ProviderAgreementModal from '../components/ProviderAgreementModal';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -27,6 +28,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   });
   const [isProviderSignup, setIsProviderSignup] = useState(false);
   const [error, setError] = useState('');
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [hasAgreedToTerms, setHasAgreedToTerms] = useState(false);
 
   useEffect(() => {
     const roleParam = searchParams.get('role');
@@ -40,6 +43,29 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setIsProviderSignup(false);
     }
   }, [searchParams]);
+
+  // Reset agreement when provider signup is toggled off
+  useEffect(() => {
+    if (!isProviderSignup) {
+      setHasAgreedToTerms(false);
+    }
+  }, [isProviderSignup]);
+
+  const handleAgreementAccept = () => {
+    setHasAgreedToTerms(true);
+    setShowAgreementModal(false);
+  };
+
+  const handleAgreementCheckboxClick = () => {
+    if (!hasAgreedToTerms) {
+      setShowAgreementModal(true);
+    } else {
+      setHasAgreedToTerms(false);
+    }
+  };
+
+  // Check if signup button should be disabled
+  const isSignupButtonDisabled = loading || (mode === 'signup' && isProviderSignup && !hasAgreedToTerms);
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     setLoading(true);
@@ -224,24 +250,58 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
 
             {mode === 'signup' && (
-              <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition animate-fade-in ${isProviderSignup ? 'bg-teal-50 border-dahab-teal' : 'border-gray-200 hover:bg-gray-50'}`}>
-                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${isProviderSignup ? 'bg-dahab-teal border-dahab-teal' : 'border-gray-300'}`}>
-                  {isProviderSignup && <Check size={14} className="text-white" />}
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={isProviderSignup}
-                  onChange={e => setIsProviderSignup(e.target.checked)}
-                  className="hidden"
-                />
-                <div className="flex-1">
-                   <div className="font-bold text-gray-900 flex items-center gap-2">
-                     <Briefcase size={16} className={isProviderSignup ? "text-dahab-teal" : "text-gray-400"} />
-                     Register as Service Provider
-                   </div>
-                   <p className="text-xs text-gray-500 mt-1">Create events, offer driving services, or list your business. Requires admin approval.</p>
-                </div>
-              </label>
+              <div className="space-y-3 animate-fade-in">
+                {/* Provider Signup Option */}
+                <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition ${isProviderSignup ? 'bg-teal-50 border-dahab-teal' : 'border-gray-200 hover:bg-gray-50'}`}>
+                  <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${isProviderSignup ? 'bg-dahab-teal border-dahab-teal' : 'border-gray-300'}`}>
+                    {isProviderSignup && <Check size={14} className="text-white" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isProviderSignup}
+                    onChange={e => setIsProviderSignup(e.target.checked)}
+                    className="hidden"
+                  />
+                  <div className="flex-1">
+                     <div className="font-bold text-gray-900 flex items-center gap-2">
+                       <Briefcase size={16} className={isProviderSignup ? "text-dahab-teal" : "text-gray-400"} />
+                       Register as Service Provider
+                     </div>
+                     <p className="text-xs text-gray-500 mt-1">Create events, offer driving services, or list your business. Requires admin approval.</p>
+                  </div>
+                </label>
+
+                {/* Agreement Checkbox - Only shown when provider signup is selected */}
+                {isProviderSignup && (
+                  <div
+                    onClick={handleAgreementCheckboxClick}
+                    className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition ${
+                      hasAgreedToTerms
+                        ? 'bg-green-50 border-green-500'
+                        : 'border-amber-300 bg-amber-50 hover:bg-amber-100'
+                    }`}
+                  >
+                    <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                      hasAgreedToTerms
+                        ? 'bg-green-500 border-green-500'
+                        : 'border-amber-400 bg-white'
+                    }`}>
+                      {hasAgreedToTerms && <Check size={14} className="text-white" />}
+                    </div>
+                    <div className="flex-1">
+                       <div className={`font-bold flex items-center gap-2 ${hasAgreedToTerms ? 'text-green-700' : 'text-amber-700'}`}>
+                         <FileText size={16} />
+                         {hasAgreedToTerms ? 'Terms & Conditions Accepted' : 'Accept Terms & Conditions'}
+                       </div>
+                       <p className={`text-xs mt-1 ${hasAgreedToTerms ? 'text-green-600' : 'text-amber-600'}`}>
+                         {hasAgreedToTerms
+                           ? 'You have agreed to the Provider Terms & Conditions.'
+                           : 'Required: Click to read and accept the Provider Terms & Conditions before signing up.'}
+                       </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {error && (
@@ -251,10 +311,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition flex justify-center items-center gap-2"
+            {/* Warning indicator when agreement is required but not accepted */}
+            {mode === 'signup' && isProviderSignup && !hasAgreedToTerms && (
+              <div className="flex items-center gap-2 p-3 bg-amber-50 text-amber-700 rounded-xl text-sm animate-fade-in border border-amber-200">
+                <AlertCircle size={16} />
+                <span>Please accept the Terms & Conditions to create your provider account.</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSignupButtonDisabled}
+              className={`w-full py-3 rounded-xl font-bold transition flex justify-center items-center gap-2 ${
+                isSignupButtonDisabled
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-900 text-white hover:bg-gray-800'
+              }`}
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />
@@ -268,6 +340,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </form>
         </div>
       </div>
+
+      {/* Provider Agreement Modal */}
+      <ProviderAgreementModal
+        isOpen={showAgreementModal}
+        onClose={() => setShowAgreementModal(false)}
+        onAccept={handleAgreementAccept}
+      />
     </div>
   );
 };
