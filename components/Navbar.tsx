@@ -95,6 +95,13 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
       alert("New tab added to database!");
   };
 
+  const getMobileUserTabPath = () => {
+    if (userRole === UserRole.ADMIN) return "/admin";
+    if (userRole === UserRole.PROVIDER) return "/provider-dashboard";
+    if (userRole) return "/profile";
+    return "/login";
+  };
+
   const MobileTopBar = () => (
     <div className="md:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 px-4 py-3 flex justify-between items-center pt-safe border-b border-gray-100">
        <div className="flex items-center gap-2 h-10 overflow-hidden">
@@ -131,8 +138,8 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
       })}
 
       <Link 
-        to={userRole === UserRole.ADMIN ? "/admin" : userRole === UserRole.PROVIDER ? "/provider-dashboard" : userRole ? "/profile" : "/login"} 
-        className={`flex flex-col items-center gap-1 min-w-[60px] ${isActive(userRole === UserRole.ADMIN ? "/admin" : "/profile")}`}
+        to={getMobileUserTabPath()} 
+        className={`flex flex-col items-center gap-1 min-w-[60px] ${isActive(getMobileUserTabPath())}`}
       >
         {userRole === UserRole.ADMIN ? <ShieldCheck size={24} /> :
          userRole === UserRole.PROVIDER ? <Briefcase size={24} /> :
@@ -182,6 +189,19 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
       <div className="flex gap-4 items-center">
         {userRole ? (
           <div className="flex items-center gap-4">
+             {/* Admin & Provider Links */}
+             {userRole === UserRole.ADMIN && (
+               <Link to="/admin" className={`flex items-center gap-2 font-bold text-sm ${isActive('/admin')}`}>
+                 <ShieldCheck size={18} /> {t('nav.admin')}
+               </Link>
+             )}
+             
+             {userRole === UserRole.PROVIDER && (
+                <Link to="/provider-dashboard" className={`flex items-center gap-2 font-bold text-sm ${isActive('/provider-dashboard')}`}>
+                  <Briefcase size={18} /> Dash
+                </Link>
+             )}
+
              <Link to="/profile" className={`flex items-center gap-2 font-bold text-sm ${isActive('/profile')}`}>
                <User size={18} /> {t('nav.profile')}
              </Link>

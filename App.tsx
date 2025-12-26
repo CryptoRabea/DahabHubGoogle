@@ -119,6 +119,11 @@ const AppContent: React.FC = () => {
     localStorage.setItem('dahab_user', JSON.stringify(user));
   };
 
+  const handleUpdateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('dahab_user', JSON.stringify(updatedUser));
+  };
+
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('dahab_user');
@@ -176,7 +181,17 @@ const AppContent: React.FC = () => {
 
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/book/:type/:id" element={user ? <BookingPage user={user} /> : <Navigate to="/login" />} />
-            <Route path="/profile" element={<Profile user={user || {id:'', name:'Guest', role:UserRole.USER, savedEventIds:[]} as User} onToggleSave={handleToggleSave} onLogout={handleLogout} />} />
+            <Route 
+              path="/profile" 
+              element={
+                <Profile 
+                  user={user || {id:'', name:'Guest', role:UserRole.USER, savedEventIds:[]} as User} 
+                  onToggleSave={handleToggleSave} 
+                  onLogout={handleLogout} 
+                  onUpdateUser={handleUpdateUser}
+                />
+              } 
+            />
             <Route path="/provider-dashboard" element={user?.role === UserRole.PROVIDER ? <ProviderDashboard onLogout={handleLogout} /> : <Navigate to="/login" />} />
             <Route path="/admin" element={user?.role === UserRole.ADMIN ? <AdminDashboard onLogout={handleLogout} /> : <Navigate to="/login" />} />
           </Routes>

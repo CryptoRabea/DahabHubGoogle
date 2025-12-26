@@ -9,9 +9,10 @@ interface ProfileProps {
   user: User;
   onToggleSave: (id: string) => void;
   onLogout: () => void;
+  onUpdateUser: (user: User) => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ user, onToggleSave, onLogout }) => {
+const Profile: React.FC<ProfileProps> = ({ user, onToggleSave, onLogout, onUpdateUser }) => {
   const [savedEvents, setSavedEvents] = useState<Event[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [activeTab, setActiveTab] = useState<'saved' | 'bookings'>('saved');
@@ -57,13 +58,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onToggleSave, onLogout }) => {
 
   const handleSaveProfile = async () => {
       const updatedUser = { ...user, ...formData };
-      // Note: In a real app we'd have db.updateUserProfile. 
-      // Using updateSettings logic for mock persistence.
-      // But for this project we'll assume we can update user directly via DB.
-      // For now, let's update local storage and assume db mock works.
-      localStorage.setItem('dahab_user', JSON.stringify(updatedUser));
-      // Trigger a reload or update parent state if needed
-      window.location.reload();
+      // In a real app we'd call an API to update the user.
+      // Here we assume db update and local state update.
+      onUpdateUser(updatedUser);
+      setIsEditing(false);
+      // Removed window.location.reload() to prevent 404/error pages
   };
 
   return (
@@ -87,7 +86,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onToggleSave, onLogout }) => {
            </div>
         </div>
         <div className="px-10 pb-10">
-          <div className="flex flex-col md:flex-row items-start md:items-end -mt-16 gap-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end -mt-16 gap-8 relative z-10">
             <div className="relative group">
                 <div 
                   onClick={handleAvatarClick}
@@ -109,7 +108,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onToggleSave, onLogout }) => {
                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
             </div>
 
-            <div className="flex-1 space-y-4 mb-2">
+            <div className="flex-1 space-y-4 mb-2 relative z-10">
               {isEditing ? (
                 <div className="space-y-4 w-full max-w-md">
                     <input 
