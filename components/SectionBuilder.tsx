@@ -13,6 +13,7 @@ import Editable from './Editable';
 import { Link } from 'react-router-dom';
 import EventFormModal from './EventFormModal';
 import { db } from '../services/database';
+import { HeroSection, CategoriesSection, FeaturedEventsSection, BannerSection } from './PageSections';
 
 interface SectionBuilderProps {
   path: string;
@@ -37,42 +38,6 @@ const ImageBox = ({ id, language }: { id: string, language: string }) => (
   </div>
 );
 
-const HeroManager = ({ settings, onUpdateSettings }: any) => {
-    return (
-        <div className="bg-slate-900 rounded-[3rem] p-8 text-white text-start space-y-8 relative overflow-hidden">
-            <div className="relative z-10 flex justify-between items-center">
-                <div>
-                   <h3 className="text-2xl font-black uppercase tracking-tight">Hero Slide Manager</h3>
-                   <p className="text-sm text-gray-400">Add or remove images from your main landing page slider.</p>
-                </div>
-                <div className="flex gap-2">
-                    <button onClick={() => {
-                        const url = prompt("Enter Image URL:");
-                        if(url) onUpdateSettings({...settings, heroImages: [...settings.heroImages, url]});
-                    }} className="bg-dahab-teal text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-teal-700 transition">
-                        <Plus size={18}/> Add Slide
-                    </button>
-                </div>
-            </div>
-            
-            <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-                {settings.heroImages.map((img: string, idx: number) => (
-                    <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden group shadow-2xl border-2 border-white/10">
-                        <img src={img} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
-                            <button onClick={() => {
-                                const newImages = settings.heroImages.filter((_:any, i:number) => i !== idx);
-                                onUpdateSettings({...settings, heroImages: newImages});
-                            }} className="bg-red-500 p-2 rounded-full text-white hover:scale-110 transition"><Trash2 size={16}/></button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-dahab-teal/10 rounded-full blur-3xl"></div>
-        </div>
-    );
-};
-
 const SectionBuilder: React.FC<SectionBuilderProps> = ({ path, sections, onUpdate }) => {
   const { isEditing, language, settings, updateNavigation, updateSettings } = useSettings();
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -90,65 +55,82 @@ const SectionBuilder: React.FC<SectionBuilderProps> = ({ path, sections, onUpdat
     onUpdate([...sections, newSection]);
   };
 
+  const handleUpdateSectionData = (index: number, newData: any) => {
+      const newSections = [...sections];
+      newSections[index].data = { ...newSections[index].data, ...newData };
+      onUpdate(newSections);
+  };
+
+  const handleMove = (index: number, direction: 'up' | 'down') => {
+      const newSections = [...sections];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex >= 0 && targetIndex < newSections.length) {
+          const temp = newSections[index];
+          newSections[index] = newSections[targetIndex];
+          newSections[targetIndex] = temp;
+          onUpdate(newSections);
+      }
+  };
+
+  const handleToggle = (index: number) => {
+      const newSections = [...sections];
+      newSections[index].isVisible = !newSections[index].isVisible;
+      onUpdate(newSections);
+  };
+
+  const handleDelete = (index: number) => {
+      if(window.confirm("Remove this section?")) {
+          const newSections = sections.filter((_, i) => i !== index);
+          onUpdate(newSections);
+      }
+  };
+
   return (
     <div className="mt-20 space-y-12 mb-32 relative z-[50]">
       {/* Page Sections Listing */}
-      {sections.map((section, idx) => (
-        <div key={section.id} className={`relative transition-all border-l-8 border-dahab-teal/20 pl-6 ${section.isVisible ? '' : 'opacity-40 grayscale'}`}>
-             <div className="absolute top-0 left-6 z-50 flex gap-2 -translate-y-1/2">
-                 <div className="bg-slate-900 text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase shadow-2xl flex items-center gap-3 border border-white/10">
-                    <div className="w-2 h-2 bg-dahab-teal rounded-full animate-pulse"></div>
-                    {section.type} block
-                 </div>
-                 <div className="flex gap-1 bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-2xl border border-gray-200">
-                    <button onClick={() => {
-                        const next = [...sections];
-                        if(idx > 0) { [next[idx], next[idx-1]] = [next[idx-1], next[idx]]; onUpdate(next); }
-                    }} className="p-2 rounded-xl hover:bg-gray-100 transition"><ArrowUp size={18}/></button>
-                    <button onClick={() => {
-                        const next = [...sections];
-                        if(idx < next.length - 1) { [next[idx], next[idx+1]] = [next[idx+1], next[idx]]; onUpdate(next); }
-                    }} className="p-2 rounded-xl hover:bg-gray-100 transition"><ArrowDown size={18}/></button>
-                    <button onClick={() => {
-                        const next = [...sections];
-                        next[idx].isVisible = !next[idx].isVisible;
-                        onUpdate(next);
-                    }} className="p-2 rounded-xl hover:bg-gray-100 transition">
-                      {section.isVisible ? <Eye size={18} className="text-dahab-teal"/> : <EyeOff size={18}/>}
-                    </button>
-                    <button onClick={() => {
-                        if(window.confirm("Delete section?")) onUpdate(sections.filter((_, i) => i !== idx));
-                    }} className="p-2 rounded-xl hover:bg-red-50 text-red-500 transition"><Trash2 size={18} /></button>
-                 </div>
-            </div>
+      {sections.map((section, idx) => {
+        const props = {
+            key: section.id,
+            id: section.id,
+            isActive: section.isVisible,
+            isEditing: true, // Always true since SectionBuilder only renders when editing
+            settings,
+            sectionData: section.data,
+            onUpdate: (data: any) => handleUpdateSectionData(idx, data),
+            onMove: (dir: 'up'|'down') => handleMove(idx, dir),
+            onToggle: () => handleToggle(idx),
+            onDelete: () => handleDelete(idx),
+            onQuickAdd: () => setIsEventModalOpen(true)
+        };
 
-            <div className="py-10">
-                {section.type === 'text' && <TextBox id={section.id} language={language} />}
-                {section.type === 'image-box' && <ImageBox id={section.id} language={language} />}
-                {section.type === 'hero' && <HeroManager settings={settings} onUpdateSettings={updateSettings} />}
-                {['card-grid', 'featured', 'banner', 'categories'].includes(section.type) && (
-                   <div className="p-12 bg-white rounded-[3.5rem] border border-gray-100 flex flex-col items-center justify-center text-center gap-6 group shadow-xl">
-                       <div className="w-20 h-20 bg-dahab-teal/10 rounded-[2rem] flex items-center justify-center text-dahab-teal group-hover:rotate-6 transition-all duration-500">
-                          <Database size={40} />
-                       </div>
-                       <div className="space-y-2">
-                          <h3 className="font-black text-2xl uppercase tracking-tighter text-gray-900">Functional {section.type} Active</h3>
-                          <p className="text-sm text-gray-500 max-w-sm">This block is linked to your backend. Content is managed via the Admin Dashboard or Quick-Add buttons.</p>
-                       </div>
-                       <div className="flex gap-2">
-                           <span className="px-4 py-1.5 bg-green-50 text-green-700 text-[10px] font-black rounded-full border border-green-100">LIVE CONNECTION</span>
-                       </div>
-                   </div>
-                )}
+        return (
+            <div key={section.id} className={`relative transition-all border-l-8 border-dahab-teal/20 pl-6 ${section.isVisible ? '' : 'opacity-40 grayscale'}`}>
+                <div className="py-10">
+                    {section.type === 'text' && <TextBox id={section.id} language={language} />}
+                    {section.type === 'image-box' && <ImageBox id={section.id} language={language} />}
+                    {section.type === 'hero' && <HeroSection {...props} />}
+                    {section.type === 'categories' && <CategoriesSection {...props} />}
+                    {section.type === 'featured' && <FeaturedEventsSection {...props} />}
+                    {section.type === 'banner' && <BannerSection {...props} />}
+                    {section.type === 'card-grid' && (
+                        <div className="p-12 bg-white rounded-[3.5rem] border border-gray-100 flex flex-col items-center justify-center text-center gap-6 group shadow-xl">
+                            <div className="w-20 h-20 bg-dahab-teal/10 rounded-[2rem] flex items-center justify-center text-dahab-teal">
+                                <Layout size={40} />
+                            </div>
+                            <h3 className="font-black text-2xl uppercase tracking-tighter text-gray-900">Custom Grid Layout</h3>
+                            <p className="text-sm text-gray-500">Grid configurations coming soon.</p>
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* COMPACT MASTER BUILDER */}
       <div className="relative px-6 max-w-5xl mx-auto">
         <div className="bg-white rounded-[3.5rem] p-8 border-2 border-dahab-teal/20 flex flex-col items-center gap-10 shadow-2xl border-dashed">
             
-            {/* Global Actions - REMOVED PROVIDER REGISTER AS REQUESTED */}
+            {/* Global Actions */}
             <div className="w-full">
                 <div className="flex justify-between items-center mb-6 px-4">
                   <div className="flex items-center gap-2 text-xs font-black text-dahab-teal uppercase tracking-widest">
@@ -193,7 +175,7 @@ const SectionBuilder: React.FC<SectionBuilderProps> = ({ path, sections, onUpdat
                 </div>
                 <div className="flex flex-wrap gap-4 justify-center">
                     {[
-                      { type: 'hero', label: 'Slider', icon: ImageIcon, color: 'bg-orange-500' },
+                      { type: 'hero', label: 'Hero Slider', icon: Layout, color: 'bg-blue-500' },
                       { type: 'text', label: 'Rich Text', icon: Type, color: 'bg-dahab-teal' },
                       { type: 'image-box', label: 'Image', icon: ImageIcon, color: 'bg-rose-500' },
                       { type: 'card-grid', label: 'Grid', icon: Layout, color: 'bg-emerald-500' },

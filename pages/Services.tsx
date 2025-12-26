@@ -81,17 +81,6 @@ const Services: React.FC<ServicesProps> = ({ user }) => {
     await updateContent(bannerButtonsKey, JSON.stringify(newButtons));
   };
 
-  const handleAddButton = () => {
-    const newBtn: BannerButton = {
-      id: Math.random().toString(36).substr(2, 5),
-      label: 'New Button',
-      link: '/',
-      icon: 'ExternalLink',
-      style: 'secondary'
-    };
-    saveButtons([...bannerButtons, newBtn]);
-  };
-
   const handleDeleteButton = (idx: number) => {
     if (window.confirm("Remove this button?")) {
       const newButtons = bannerButtons.filter((_, i) => i !== idx);
@@ -119,12 +108,19 @@ const Services: React.FC<ServicesProps> = ({ user }) => {
       {/* Header with Tabs */}
       <div className={`bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-gray-900 transition-all ${isEditing ? 'ring-2 ring-dahab-teal border-dashed' : ''}`}>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <h1 className="text-2xl font-bold">
-            <Editable 
-              id={`services_title_${language}`} 
-              defaultContent={language === 'ar' ? 'دليل الخدمات' : 'Services Directory'} 
-            />
-          </h1>
+          <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold">
+                <Editable 
+                  id={`services_title_${language}`} 
+                  defaultContent={language === 'ar' ? 'دليل الخدمات' : 'Services Directory'} 
+                />
+              </h1>
+              {isEditing && (
+                  <button className="border-2 border-dashed border-dahab-teal text-dahab-teal px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-teal-50" title="Add Service (Admin Mock)">
+                      <Plus size={14} /> Add Services
+                  </button>
+              )}
+          </div>
           <div className="flex p-1 bg-gray-100 rounded-xl">
             {['all', 'Driver', 'Other'].map((tab) => (
               <button
@@ -180,15 +176,6 @@ const Services: React.FC<ServicesProps> = ({ user }) => {
                  </div>
                );
              })}
-             
-             {isEditing && (
-               <button 
-                 onClick={handleAddButton}
-                 className="p-3 border-2 border-dashed border-dahab-teal text-dahab-teal rounded-xl hover:bg-white transition flex items-center justify-center gap-2 font-bold text-xs"
-               >
-                 <Plus size={16} /> Add Button
-               </button>
-             )}
           </div>
         </div>
       </div>
@@ -308,7 +295,6 @@ const Services: React.FC<ServicesProps> = ({ user }) => {
         </div>
       )}
 
-      {/* Reviews Modal */}
       <ReviewsModal 
         isOpen={reviewModalOpen}
         onClose={() => setReviewModalOpen(false)}
