@@ -1,8 +1,7 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 export const getDahabConciergeResponse = async (query: string): Promise<string> => {
-  // Use process.env.API_KEY directly. Vite replaces 'process.env' with the env object during build.
-  // We assume the variable is pre-configured as per guidelines.
   const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
@@ -28,7 +27,7 @@ export const getDahabConciergeResponse = async (query: string): Promise<string> 
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: query,
       config: {
         systemInstruction: systemInstruction,

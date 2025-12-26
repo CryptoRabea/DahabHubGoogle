@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, Calendar, Car, User, LayoutDashboard, LogOut, Users, Menu, Briefcase, 
-  Download, ShieldCheck, Settings, Plus, X, ArrowUp, ArrowDown, Trash2 
+  Download, ShieldCheck, Settings, Plus, X, ArrowUp, ArrowDown, Trash2, Globe
 } from 'lucide-react';
 import { UserRole, NavItem } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
+import Editable from './Editable';
 
 interface NavbarProps {
   userRole: UserRole | null;
@@ -15,7 +16,6 @@ interface NavbarProps {
   onInstall: () => void;
 }
 
-// Icon Mapping
 const ICON_MAP: Record<string, any> = {
     'Home': Home,
     'Calendar': Calendar,
@@ -24,28 +24,52 @@ const ICON_MAP: Record<string, any> = {
     'Menu': Menu,
     'User': User,
     'Briefcase': Briefcase,
-    'ShieldCheck': ShieldCheck
+    'ShieldCheck': ShieldCheck,
+    'Globe': Globe
 };
 
 const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onInstall }) => {
   const location = useLocation();
-  const { settings, isEditing, updateNavigation } = useSettings();
+  const { settings, isEditing, updateNavigation, language, setLanguage, t } = useSettings();
   const [logoError, setLogoError] = useState(false);
   const [isNavEditorOpen, setIsNavEditorOpen] = useState(false);
 
-  // Filter visible items and sort
   const navItems = settings.navigation.filter(i => i.isVisible).sort((a, b) => a.order - b.order);
 
   const isActive = (path: string) => location.pathname === path ? "text-dahab-teal font-bold" : "text-gray-500 hover:text-dahab-teal";
 
-  // Brand Logo Logic
+  const LanguageToggle = () => (
+    <button 
+      onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+      className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-full transition-all border border-gray-200 group"
+    >
+      <Globe size={16} className="text-dahab-teal group-hover:rotate-12 transition-transform" />
+      <span className="text-xs font-bold uppercase tracking-wider text-gray-700">
+        {language === 'en' ? 'عربي' : 'EN'}
+      </span>
+    </button>
+  );
+
   const BrandLogo = ({ className = "h-10" }: { className?: string }) => {
+    if (isEditing) {
+      return (
+        <div className={`flex items-center ${className} max-w-[120px] overflow-hidden`}>
+           <Editable 
+             id="global-logo" 
+             type="image" 
+             defaultContent={settings.logoUrl} 
+             className="h-full w-auto object-contain"
+           />
+        </div>
+      );
+    }
+
     if (settings.logoUrl && !logoError) {
       return (
         <img 
           src={settings.logoUrl} 
           alt={settings.appName} 
-          className={`${className} w-auto object-contain`} 
+          className={`${className} w-auto object-contain max-w-[150px]`} 
           onError={() => setLogoError(true)}
         />
       );
@@ -57,194 +81,121 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
     );
   };
 
-  // --- Dynamic Nav Editor Logic ---
-  const handleMoveItem = (index: number, direction: 'up' | 'down') => {
-      const newItems = [...settings.navigation];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      
-      if (targetIndex >= 0 && targetIndex < newItems.length) {
-          // Swap orders
-          const tempOrder = newItems[index].order;
-          newItems[index].order = newItems[targetIndex].order;
-          newItems[targetIndex].order = tempOrder;
-          
-          // Re-sort array
-          newItems.sort((a, b) => a.order - b.order);
-          updateNavigation(newItems);
-      }
-  };
-
-  const handleToggleVisibility = (id: string) => {
-      const newItems = settings.navigation.map(item => 
-          item.id === id ? { ...item, isVisible: !item.isVisible } : item
-      );
-      updateNavigation(newItems);
-  };
-
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
       const id = Math.random().toString(36).substr(2, 5);
       const newItems = [...settings.navigation, {
           id: `nav-${id}`,
           label: 'New Tab',
-          path: '/',
-          icon: 'Home',
+          path: `/p/${id}`, 
+          icon: 'Globe',
           order: settings.navigation.length + 1,
           isVisible: true
       }];
-      updateNavigation(newItems);
+      await updateNavigation(newItems);
+      alert("New tab added to database!");
   };
 
-  const handleDeleteItem = (id: string) => {
-      if (window.confirm("Delete this tab?")) {
-          const newItems = settings.navigation.filter(i => i.id !== id);
-          updateNavigation(newItems);
-      }
-  };
-
-  const handleUpdateItem = (id: string, field: keyof NavItem, value: any) => {
-      const newItems = settings.navigation.map(item => 
-          item.id === id ? { ...item, [field]: value } : item
-      );
-      updateNavigation(newItems);
-  };
-  // -------------------------------
-
-  // Mobile Top Bar
   const MobileTopBar = () => (
-    <div className="md:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 px-4 py-3 flex justify-between items-center pt-safe transition-all">
-       <Link to="/" className="flex items-center gap-2">
+    <div className="md:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50 px-4 py-3 flex justify-between items-center pt-safe border-b border-gray-100">
+       <div className="flex items-center gap-2 h-10 overflow-hidden">
           <BrandLogo className="h-8" />
-       </Link>
+       </div>
        
        <div className="flex items-center gap-2">
-         {/* Install Button */}
-         {installPrompt && (
-            <button onClick={onInstall} className="text-gray-900 bg-gray-100 p-2 rounded-full mr-1">
-              <Download size={16} />
-            </button>
+         <LanguageToggle />
+         {userRole === UserRole.ADMIN && (
+             <button onClick={handleAddItem} className="p-2 bg-dahab-teal text-white rounded-full shadow-lg">
+                 <Plus size={16} />
+             </button>
          )}
-
-         {/* Admin Edit Trigger */}
          {isEditing && (
-             <button onClick={() => setIsNavEditorOpen(true)} className="p-2 bg-dahab-teal text-white rounded-full animate-pulse">
+             <button onClick={() => setIsNavEditorOpen(true)} className="p-2 bg-slate-900 text-white rounded-full">
                  <Settings size={16} />
              </button>
-         )}
-
-         {/* Auth Actions */}
-         {!userRole ? (
-           <div className="flex gap-2">
-             <Link to="/login" className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-full hover:bg-gray-50">Login</Link>
-             <Link to="/login?mode=signup" className="px-3 py-1.5 text-xs font-bold bg-dahab-teal text-white rounded-full hover:bg-teal-700 shadow-sm">Sign Up</Link>
-           </div>
-         ) : (
-           <div className="flex gap-2 items-center">
-             <Link to="/profile" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-dahab-teal border border-gray-200">
-               <User size={16} />
-             </Link>
-             <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-full transition">
-               <LogOut size={20} />
-             </button>
-           </div>
          )}
        </div>
     </div>
   );
 
-  // Bottom Nav for Mobile - Dynamic
   const MobileBottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 py-3 px-6 flex justify-between items-center z-50 md:hidden pb-safe transition-all overflow-x-auto no-scrollbar">
-      
+    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 py-3 px-6 flex justify-between items-center z-50 md:hidden pb-safe overflow-x-auto no-scrollbar">
       {navItems.map((item) => {
           const Icon = ICON_MAP[item.icon] || Home;
+          const translatedLabel = t(`nav.${item.label.toLowerCase()}`);
           return (
             <Link key={item.id} to={item.path} className={`flex flex-col items-center gap-1 min-w-[60px] ${isActive(item.path)}`}>
                 <Icon size={24} />
-                <span className="text-[10px] font-medium truncate w-full text-center">{item.label}</span>
+                <span className="text-[10px] font-bold truncate w-full text-center">{translatedLabel !== `nav.${item.label.toLowerCase()}` ? translatedLabel : item.label}</span>
             </Link>
           );
       })}
 
-      {/* Dynamic Profile/Dashboard Tab (Always appended if user logged in) */}
       <Link 
-        to={
-          userRole === UserRole.ADMIN ? "/admin" : 
-          userRole === UserRole.PROVIDER ? "/provider-dashboard" : 
-          userRole ? "/profile" : "/login"
-        } 
-        className={`flex flex-col items-center gap-1 min-w-[60px] ${isActive(
-          userRole === UserRole.ADMIN ? "/admin" : 
-          userRole === UserRole.PROVIDER ? "/provider-dashboard" : 
-          userRole ? "/profile" : "/login"
-        )}`}
+        to={userRole === UserRole.ADMIN ? "/admin" : userRole === UserRole.PROVIDER ? "/provider-dashboard" : userRole ? "/profile" : "/login"} 
+        className={`flex flex-col items-center gap-1 min-w-[60px] ${isActive(userRole === UserRole.ADMIN ? "/admin" : "/profile")}`}
       >
         {userRole === UserRole.ADMIN ? <ShieldCheck size={24} /> :
          userRole === UserRole.PROVIDER ? <Briefcase size={24} /> :
          <User size={24} />
         }
-        <span className="text-[10px] font-medium">
-          {userRole === UserRole.ADMIN ? 'Admin' : 
+        <span className="text-[10px] font-bold">
+          {userRole === UserRole.ADMIN ? t('nav.admin') : 
            userRole === UserRole.PROVIDER ? 'Dash' : 
-           userRole ? 'Profile' : 'Login'}
+           userRole ? t('nav.profile') : t('nav.login')}
         </span>
       </Link>
     </div>
   );
 
-  // Top Nav for Desktop - Dynamic
   const DesktopNav = () => (
-    <div className="hidden md:flex fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50 px-8 py-4 justify-between items-center pt-safe">
-      <Link to="/" className="text-2xl font-bold text-dahab-teal tracking-tight flex items-center gap-3">
-        <BrandLogo />
-      </Link>
+    <div className="hidden md:flex fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50 px-8 py-4 justify-between items-center pt-safe border-b border-gray-100">
+      <div className="flex items-center gap-6 h-12">
+        <BrandLogo className="h-10" />
+        <div className="h-6 w-px bg-gray-200"></div>
+        <LanguageToggle />
+      </div>
       
       <div className="flex gap-8 items-center">
-        {navItems.map((item) => (
-             <Link key={item.id} to={item.path} className={`text-sm font-medium transition-colors ${isActive(item.path)}`}>
-                 {item.label}
-             </Link>
-        ))}
+        {navItems.map((item) => {
+             const translatedLabel = t(`nav.${item.label.toLowerCase()}`);
+             return (
+              <Link key={item.id} to={item.path} className={`text-sm font-bold transition-colors ${isActive(item.path)}`}>
+                  {translatedLabel !== `nav.${item.label.toLowerCase()}` ? translatedLabel : item.label}
+              </Link>
+             );
+        })}
         
-        {userRole === UserRole.PROVIDER && (
-           <Link to="/provider-dashboard" className={`text-sm font-medium transition-colors ${isActive('/provider-dashboard')}`}>Provider Dashboard</Link>
-        )}
         {userRole === UserRole.ADMIN && (
-          <Link to="/admin" className={`text-sm font-medium transition-colors ${isActive('/admin')}`}>Admin Dashboard</Link>
-        )}
-        
-        {isEditing && (
-            <button onClick={() => setIsNavEditorOpen(true)} className="bg-dahab-teal text-white px-3 py-1 rounded text-xs font-bold hover:bg-teal-700">
-                Edit Menu
-            </button>
+          <div className="flex items-center gap-2">
+             <button onClick={handleAddItem} className="bg-dahab-teal text-white p-2 rounded-full hover:scale-110 transition shadow-md" title="Quick Add Tab">
+                <Plus size={16} />
+             </button>
+             {isEditing && (
+                <button onClick={() => setIsNavEditorOpen(true)} className="bg-slate-900 text-white px-3 py-1 rounded text-xs font-bold hover:bg-black transition">
+                    Edit Menu
+                </button>
+             )}
+          </div>
         )}
       </div>
 
       <div className="flex gap-4 items-center">
-        {installPrompt && (
-          <button 
-            onClick={onInstall} 
-            className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition text-sm font-bold shadow-md"
-          >
-            <Download size={16} /> Install App
-          </button>
-        )}
-
         {userRole ? (
-          <>
-             <Link to="/profile" className={`flex items-center gap-2 font-medium ${isActive('/profile')}`}>
-               <User size={18} /> Profile
+          <div className="flex items-center gap-4">
+             <Link to="/profile" className={`flex items-center gap-2 font-bold text-sm ${isActive('/profile')}`}>
+               <User size={18} /> {t('nav.profile')}
              </Link>
-            <button onClick={onLogout} className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium ml-4">
-              <LogOut size={18} /> Logout
+            <button onClick={onLogout} className="text-red-500 hover:text-red-600 font-bold text-sm flex items-center gap-2">
+              <LogOut size={18} /> {t('nav.logout')}
             </button>
-          </>
+          </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Link to="/login" className="text-gray-600 hover:text-dahab-teal px-4 py-2 rounded-full font-bold transition">
-              Login
+            <Link to="/login" className="text-gray-600 hover:text-dahab-teal px-4 py-2 rounded-full font-bold transition text-sm">
+              {t('nav.login')}
             </Link>
-            <Link to="/login?mode=signup" className="bg-dahab-teal text-white px-5 py-2 rounded-full hover:bg-teal-700 transition shadow-md font-bold">
-              Sign Up
+            <Link to="/login?mode=signup" className="bg-dahab-teal text-white px-5 py-2 rounded-full hover:bg-teal-700 transition shadow-md font-bold text-sm">
+              {t('nav.signup')}
             </Link>
           </div>
         )}
@@ -258,59 +209,74 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
       <MobileTopBar />
       <MobileBottomNav />
 
-      {/* Nav Editor Modal */}
       {isNavEditorOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-                  <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                      <h3 className="font-bold text-lg text-gray-900">Customize Navigation</h3>
-                      <button onClick={() => setIsNavEditorOpen(false)}><X size={20} className="text-gray-500" /></button>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <div className="bg-white rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] text-gray-900">
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                      <h3 className="font-extrabold text-xl text-gray-900">Menu Architect</h3>
+                      <button onClick={() => setIsNavEditorOpen(false)}><X size={24} className="text-gray-400" /></button>
                   </div>
-                  <div className="p-4 overflow-y-auto space-y-3">
+                  <div className="p-6 overflow-y-auto space-y-4">
                       {settings.navigation.sort((a,b) => a.order - b.order).map((item, index) => (
-                          <div key={item.id} className={`flex items-center gap-2 p-3 rounded-xl border ${item.isVisible ? 'bg-white border-gray-200' : 'bg-gray-50 border-dashed border-gray-300 opacity-60'}`}>
+                          <div key={item.id} className={`flex items-center gap-3 p-4 rounded-2xl border ${item.isVisible ? 'bg-white border-gray-100 shadow-sm' : 'bg-gray-50 border-dashed border-gray-200 opacity-60 grayscale'}`}>
                               <div className="flex flex-col gap-1">
-                                  <button onClick={() => handleMoveItem(index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-dahab-teal disabled:opacity-30"><ArrowUp size={14} /></button>
-                                  <button onClick={() => handleMoveItem(index, 'down')} disabled={index === settings.navigation.length - 1} className="text-gray-400 hover:text-dahab-teal disabled:opacity-30"><ArrowDown size={14} /></button>
+                                  <button onClick={() => {
+                                      const newItems = [...settings.navigation];
+                                      if(index > 0) {
+                                          [newItems[index].order, newItems[index-1].order] = [newItems[index-1].order, newItems[index].order];
+                                          updateNavigation(newItems);
+                                      }
+                                  }} className="text-gray-400 hover:text-dahab-teal"><ArrowUp size={16} /></button>
+                                  <button onClick={() => {
+                                      const newItems = [...settings.navigation];
+                                      if(index < newItems.length - 1) {
+                                          [newItems[index].order, newItems[index+1].order] = [newItems[index+1].order, newItems[index].order];
+                                          updateNavigation(newItems);
+                                      }
+                                  }} className="text-gray-400 hover:text-dahab-teal"><ArrowDown size={16} /></button>
                               </div>
-                              <div className="flex-1 grid grid-cols-2 gap-2">
+                              <div className="flex-1 space-y-2">
                                   <input 
                                     value={item.label} 
-                                    onChange={(e) => handleUpdateItem(item.id, 'label', e.target.value)}
-                                    className="border rounded px-2 py-1 text-sm text-gray-900" 
-                                    placeholder="Label"
+                                    onChange={(e) => {
+                                        const newItems = settings.navigation.map(i => i.id === item.id ? {...i, label: e.target.value} : i);
+                                        updateNavigation(newItems);
+                                    }}
+                                    className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1 text-sm font-bold w-full" 
                                   />
-                                   <input 
-                                    value={item.path} 
-                                    onChange={(e) => handleUpdateItem(item.id, 'path', e.target.value)}
-                                    className="border rounded px-2 py-1 text-sm text-gray-900" 
-                                    placeholder="/path"
-                                  />
-                                   <select 
-                                     value={item.icon} 
-                                     onChange={(e) => handleUpdateItem(item.id, 'icon', e.target.value)}
-                                     className="border rounded px-2 py-1 text-sm text-gray-900"
-                                   >
-                                      {Object.keys(ICON_MAP).map(k => <option key={k} value={k}>{k}</option>)}
-                                   </select>
-                              </div>
-                              <div className="flex items-center gap-1">
                                   <input 
-                                    type="checkbox" 
-                                    checked={item.isVisible} 
-                                    onChange={() => handleToggleVisibility(item.id)}
-                                    className="w-4 h-4"
+                                    value={item.path} 
+                                    onChange={(e) => {
+                                        const newItems = settings.navigation.map(i => i.id === item.id ? {...i, path: e.target.value} : i);
+                                        updateNavigation(newItems);
+                                    }}
+                                    className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1 text-xs font-mono w-full" 
                                   />
-                                  <button onClick={() => handleDeleteItem(item.id)} className="p-2 text-red-400 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                  <button 
+                                    onClick={() => {
+                                        const newItems = settings.navigation.map(i => i.id === item.id ? {...i, isVisible: !i.isVisible} : i);
+                                        updateNavigation(newItems);
+                                    }}
+                                    className={`p-2 rounded-lg transition ${item.isVisible ? 'text-dahab-teal bg-teal-50' : 'text-gray-400 bg-gray-100'}`}
+                                  >
+                                      {item.isVisible ? <ShieldCheck size={18}/> : <ShieldOff size={18}/>}
+                                  </button>
+                                  <button onClick={() => {
+                                      if(window.confirm("Delete tab?")) {
+                                          const newItems = settings.navigation.filter(i => i.id !== item.id);
+                                          updateNavigation(newItems);
+                                      }
+                                  }} className="p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-500 hover:text-white transition">
+                                      <Trash2 size={18} />
+                                  </button>
                               </div>
                           </div>
                       ))}
-                      <button onClick={handleAddItem} className="w-full py-2 border-2 border-dashed border-dahab-teal text-dahab-teal font-bold rounded-xl hover:bg-teal-50 flex items-center justify-center gap-2">
-                          <Plus size={16} /> Add New Tab
-                      </button>
                   </div>
-                  <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-                      <button onClick={() => setIsNavEditorOpen(false)} className="px-6 py-2 bg-dahab-teal text-white rounded-lg font-bold">Done</button>
+                  <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+                      <button onClick={() => setIsNavEditorOpen(false)} className="px-8 py-3 bg-dahab-teal text-white rounded-xl font-black uppercase text-xs tracking-widest shadow-xl shadow-teal-500/30">Finish</button>
                   </div>
               </div>
           </div>
@@ -318,5 +284,7 @@ const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, installPrompt, onIn
     </>
   );
 };
+
+const ShieldOff = ({size}: {size:number}) => <ShieldCheck size={size} className="opacity-40" />;
 
 export default Navbar;

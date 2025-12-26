@@ -21,48 +21,63 @@ export interface NavItem {
   id: string;
   label: string;
   path: string;
-  icon: string; // Icon name string (e.g., 'Home', 'Calendar')
+  icon: string; 
   order: number;
   isVisible: boolean;
 }
 
+export interface CardItem {
+  id: string;
+  title: string;
+  imageUrl: string;
+  link: string;
+}
+
 export interface HomeSection {
   id: string;
-  type: 'hero' | 'categories' | 'featured' | 'banner' | 'text';
+  type: 'hero' | 'categories' | 'featured' | 'banner' | 'text' | 'image-box' | 'card-grid';
   order: number;
   isVisible: boolean;
-  data?: any; // For custom titles, buttons configs, etc.
+  data?: any; 
+}
+
+export interface HeroConfig {
+  height: string; 
+  displayLimit: number;
+  autoPlaySpeed: number;
 }
 // ------------------------
 
 export interface AppSettings {
   appName: string;
-  logoUrl: string; // Base64 or URL
+  logoUrl: string; 
   heroImages: string[];
-  backgroundStyle: string; // CSS background value
-  contentOverrides: { [key: string]: string }; // Key-Value pair for text/image replacements
-  
-  // New Dynamic Configs
+  heroConfig?: HeroConfig;
+  backgroundStyle: string; 
+  contentOverrides: { [key: string]: string };
   navigation: NavItem[];
   homeLayout: HomeSection[];
+  // Mapping of route path to array of custom sections
+  pageLayouts?: Record<string, HomeSection[]>;
 }
 
 export interface User {
   id: string;
   name: string;
   role: UserRole;
-  // Updated statuses for subscription flow
+  avatarUrl?: string;
+  bio?: string;
   providerStatus?: 'pending' | 'pending_payment' | 'payment_review' | 'approved' | 'rejected';
   email: string;
   isEmailVerified?: boolean;
   provider?: 'email' | 'google' | 'facebook';
   savedEventIds: string[];
-  subscriptionReceipt?: string; // URL/Base64 of payment receipt
+  subscriptionReceipt?: string;
 }
 
 export interface Review {
   id: string;
-  itemId: string; // Event ID or Service ID
+  itemId: string;
   userId: string;
   userName: string;
   rating: number;
@@ -84,8 +99,8 @@ export interface Post {
   authorName: string;
   authorRole: UserRole;
   content: string;
-  imageUrl?: string; // Base64 or URL
-  likes: string[]; // Array of User IDs who liked
+  imageUrl?: string;
+  likes: string[];
   comments: Comment[];
   timestamp: string;
 }
@@ -122,7 +137,7 @@ export interface ServiceProvider {
 
 export interface Booking {
   id: string;
-  itemId: string; // Event ID or Service ID
+  itemId: string;
   itemType: 'event' | 'service';
   userId: string;
   userName: string;
@@ -130,5 +145,5 @@ export interface Booking {
   method: PaymentMethod;
   status: BookingStatus;
   timestamp: string;
-  receiptImage?: string; // Base64 placeholder
+  receiptImage?: string;
 }

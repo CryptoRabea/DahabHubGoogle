@@ -2,7 +2,7 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings, NavItem, HomeSection } from '../types';
 
 // Increment this version to force a data reset on client browsers
-const DB_VERSION = '2.3'; 
+const DB_VERSION = '2.4'; 
 
 // Default Navigation
 const DEFAULT_NAV: NavItem[] = [
@@ -79,6 +79,7 @@ class MockDatabaseService {
       localStorage.removeItem('events');
       localStorage.removeItem('providers');
       localStorage.removeItem('settings');
+      localStorage.removeItem('users'); // Reset users to ensure clean state
       localStorage.setItem('db_version', DB_VERSION);
     }
 
@@ -86,6 +87,8 @@ class MockDatabaseService {
     if (!localStorage.getItem('settings')) setItem('settings', INITIAL_SETTINGS);
     
     const users = getItem<User[]>('users', []);
+    
+    // Seed Admin
     if (!users.find(u => u.email === 'admin@dahab.com')) {
         users.push({
             id: 'admin1',
@@ -94,14 +97,38 @@ class MockDatabaseService {
             role: UserRole.ADMIN,
             savedEventIds: []
         });
-        setItem('users', users);
     }
+
+    // Seed Provider
+    if (!users.find(u => u.email === 'provider@dahab.com')) {
+        users.push({
+            id: 'provider1',
+            name: 'Dahab Divers',
+            email: 'provider@dahab.com',
+            role: UserRole.PROVIDER,
+            providerStatus: 'approved',
+            savedEventIds: []
+        });
+    }
+
+    // Seed Regular User
+    if (!users.find(u => u.email === 'user@dahab.com')) {
+        users.push({
+            id: 'user1',
+            name: 'John Doe',
+            email: 'user@dahab.com',
+            role: UserRole.USER,
+            savedEventIds: []
+        });
+    }
+
+    setItem('users', users);
   }
 
   async login(email: string, password: string): Promise<User> {
     await delay();
     const users = getItem<User[]>('users', []);
-    const user = users.find(u => u.email === email);
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     
     if (user) {
       return user;
@@ -116,7 +143,7 @@ class MockDatabaseService {
     await delay();
     const users = getItem<User[]>('users', []);
     
-    if (users.find(u => u.email === email)) {
+    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
       const error: any = new Error("Email in use");
       error.code = "auth/email-already-in-use";
       throw error;
