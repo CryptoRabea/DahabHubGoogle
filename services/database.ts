@@ -41,7 +41,7 @@ const INITIAL_SETTINGS: AppSettings = {
   homeLayout: DEFAULT_HOME_LAYOUT
 };
 
-const uploadImageToFolder = async (folder: 'Events' | 'Images' | 'Logos' | 'Receipts', urlOrBase64: string | undefined): Promise<string | undefined> => {
+const uploadImageToFolder = async (folder: 'Events' | 'Images' | 'Logos' | 'Receipts' | 'Providers', urlOrBase64: string | undefined): Promise<string | undefined> => {
     if (!urlOrBase64) return undefined;
     if (urlOrBase64.startsWith('http')) return urlOrBase64;
     if (!storage) return urlOrBase64;
@@ -185,6 +185,24 @@ class DatabaseService {
     const q = query(collection(dbFirestore, 'providers'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ServiceProvider));
+  }
+  
+  async addProvider(provider: ServiceProvider): Promise<void> {
+      const imageUrl = await uploadImageToFolder('Providers', provider.imageUrl);
+      const newProvider = { ...provider, imageUrl: imageUrl || provider.imageUrl };
+      await setDoc(doc(dbFirestore, 'providers', provider.id), newProvider);
+  }
+
+  async updateProvider(provider: ServiceProvider): Promise<void> {
+      const imageUrl = await uploadImageToFolder('Providers', provider.imageUrl);
+      await updateDoc(doc(dbFirestore, 'providers', provider.id), {
+          ...provider,
+          imageUrl: imageUrl || provider.imageUrl
+      });
+  }
+
+  async deleteProvider(id: string): Promise<void> {
+      await deleteDoc(doc(dbFirestore, 'providers', id));
   }
 
   async getPosts(): Promise<Post[]> {

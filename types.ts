@@ -127,7 +127,7 @@ export interface Event {
 export interface ServiceProvider {
   id: string;
   name: string;
-  serviceType: 'Driver' | 'Cleaner' | 'Guide' | 'Maintenance';
+  serviceType: string;
   description: string;
   phone: string;
   rating: number;

@@ -2,7 +2,7 @@
 import { Event, ServiceProvider, Booking, User, UserRole, BookingStatus, Review, Post, Comment, AppSettings, NavItem, HomeSection } from '../types';
 
 // Increment this version to force a data reset on client browsers
-const DB_VERSION = '2.4'; 
+const DB_VERSION = '2.5'; 
 
 // Default Navigation
 const DEFAULT_NAV: NavItem[] = [
@@ -222,6 +222,21 @@ class MockDatabaseService {
      if(event) { event.isFeatured = featured; setItem('events', events); }
   }
   async getProviders(): Promise<ServiceProvider[]> { return getItem<ServiceProvider[]>('providers', []); }
+  async addProvider(provider: ServiceProvider): Promise<void> {
+      const providers = getItem<ServiceProvider[]>('providers', []);
+      providers.push(provider);
+      setItem('providers', providers);
+  }
+  async updateProvider(provider: ServiceProvider): Promise<void> {
+      const providers = getItem<ServiceProvider[]>('providers', []);
+      const index = providers.findIndex(p => p.id === provider.id);
+      if(index !== -1) { providers[index] = provider; setItem('providers', providers); }
+  }
+  async deleteProvider(id: string): Promise<void> {
+      const providers = getItem<ServiceProvider[]>('providers', []);
+      setItem('providers', providers.filter(p => p.id !== id));
+  }
+
   async getReviews(itemId: string): Promise<Review[]> {
     const reviews = getItem<Review[]>('reviews', []);
     return reviews.filter(r => r.itemId === itemId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
