@@ -1,0 +1,24 @@
+{
+  "name": "3d-poser",
+  "version": "1.0.0",
+  "description": "Advanced 3D character pose editor with bone manipulation, undo/redo, and pose export",
+  "author": "CrazyRoosterGames",
+  "license": "MIT",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "3d",
+    "poser",
+    "character",
+    "animation",
+    "bone",
+    "three.js",
+    "pose-editor"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
