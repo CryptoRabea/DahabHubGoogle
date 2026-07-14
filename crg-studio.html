@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C·R·G STUDIO — Game Development Portfolio</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{--bg:#0a0606;--bg2:#1a0a0a;--fg:#f0e6e6;--muted:#8a6a6a;--accent:#ff1a1a;--accent2:#ff4444;--gold:#ffd700;--card:#140808;--border:#3a1515;--glow:rgba(255,26,26,0.3)}
+*{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--accent) var(--bg)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden;min-height:100vh}
+h1,h2,h3,h4,h5,.font-display{font-family:'Orbitron',monospace}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.page{display:none;position:relative;z-index:1;min-height:calc(100vh - 70px)}.page.active{display:block}
+.glow-text{text-shadow:0 0 20px var(--glow),0 0 40px rgba(255,26,26,0.15)}
+.glow-border{box-shadow:0 0 15px var(--glow),inset 0 0 15px rgba(255,26,26,0.05)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;transition:all .3s ease}
+.card:hover{border-color:var(--accent);box-shadow:0 0 25px var(--glow);transform:translateY(-4px)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#cc0000);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-family:'Orbitron',monospace;font-size:13px;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.btn-primary:hover{box-shadow:0 0 20px var(--glow);transform:scale(1.05)}
+.btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent);padding:10px 24px;border-radius:8px;font-family:'Orbitron',monospace;font-size:13px;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.btn-secondary:hover{background:rgba(255,26,26,0.1);box-shadow:0 0 15px var(--glow)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#cc9900);color:#0a0606;border:none;padding:10px 24px;border-radius:8px;font-family:'Orbitron',monospace;font-size:13px;cursor:pointer;transition:all .3s;font-weight:700}
+.btn-gold:hover{box-shadow:0 0 20px rgba(255,215,0,0.4);transform:scale(1.05)}
+.nav-link{position:relative;padding:8px 16px;color:var(--muted);font-family:'Orbitron',monospace;font-size:12px;letter-spacing:1px;cursor:pointer;transition:color .3s;text-decoration:none}
+.nav-link:hover,.nav-link.active{color:var(--accent)}
+.nav-link.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60%;height:2px;background:var(--accent);border-radius:1px;box-shadow:0 0 8px var(--glow)}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;position:relative}
+.modal-lg{max-width:900px}
+.input-field{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:12px 16px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:16px;transition:border-color .3s}
+.input-field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 10px var(--glow)}
+.textarea.input-field{min-height:120px;resize:vertical}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-family:'Orbitron',monospace;letter-spacing:0.5px}
+.badge-free{background:rgba(0,200,100,0.15);color:#00c864;border:1px solid rgba(0,200,100,0.3)}
+.badge-premium{background:rgba(255,215,0,0.15);color:var(--gold);border:1px solid rgba(255,215,0,0.3)}
+.badge-admin{background:rgba(255,26,26,0.15);color:var(--accent);border:1px solid rgba(255,26,26,0.3)}
+.game-iframe{width:100%;aspect-ratio:16/9;border:none;border-radius:8px;background:#000}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:rgba(255,26,26,0.1);color:var(--accent2);margin:2px}
+#ai-widget{position:fixed;bottom:24px;right:24px;z-index:999}
+#ai-btn{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#880000);border:2px solid var(--accent);color:#fff;font-size:24px;cursor:pointer;transition:all .3s;box-shadow:0 0 20px var(--glow);display:flex;align-items:center;justify-content:center}
+#ai-btn:hover{transform:scale(1.1);box-shadow:0 0 35px var(--glow)}
+#ai-btn.listening{animation:pulse-red 1s infinite}
+#ai-panel{display:none;position:absolute;bottom:75px;right:0;width:400px;max-height:550px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+#ai-panel.open{display:flex}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 20px var(--glow)}50%{box-shadow:0 0 40px rgba(255,26,26,0.6),0 0 60px rgba(255,26,26,0.3)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+.animate-in{animation:slideUp .6s ease forwards}
+.toast{position:fixed;top:20px;right:20px;z-index:2000;padding:14px 24px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-size:15px;animation:slideUp .3s ease;transition:opacity .3s}
+.toast-success{background:rgba(0,200,100,0.9);color:#fff}
+.toast-error{background:rgba(255,26,26,0.9);color:#fff}
+.toast-info{background:rgba(255,215,0,0.9);color:#0a0606}
+.hub-msg{padding:10px 14px;border-radius:10px;max-width:80%;animation:fadeIn .3s}
+.hub-msg.self{background:rgba(255,26,26,0.15);border:1px solid var(--border);margin-left:auto}
+.hub-msg.other{background:var(--card);border:1px solid var(--border)}
+.editable-highlight{outline:2px dashed var(--gold)!important;outline-offset:2px;cursor:text}
+.pricing-card{border:2px solid var(--border);border-radius:16px;padding:32px;background:var(--card);transition:all .3s;text-align:center}
+.pricing-card.featured{border-color:var(--gold);box-shadow:0 0 30px rgba(255,215,0,0.15)}
+.pricing-card:hover{transform:translateY(-6px)}
+.channel-item{padding:10px 16px;border-radius:8px;cursor:pointer;transition:all .2s;border:1px solid transparent}
+.channel-item:hover,.channel-item.active{background:rgba(255,26,26,0.08);border-color:var(--border)}
+.store-link{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.05);color:var(--fg);font-size:12px;transition:all .2s;text-decoration:none}
+.store-link:hover{background:rgba(255,26,26,0.15);color:var(--accent)}
+@media(max-width:768px){#ai-panel{width:calc(100vw - 48px);right:-12px}.modal{padding:20px}.nav-link{padding:6px 8px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+</style>
+</head>
+<body>
+<!-- Background Canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Header -->
+<header class="fixed top-0 left-0 w-full z-50" style="background:rgba(10,6,6,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)">
+<div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-[70px]">
+<div class="flex items-center gap-3 cursor-pointer" onclick="navigate('home')">
+<img src="https://z-cdn-media.chatglm.cn/files/09d4519f-13d4-4c17-b1b8-b41b9aa76717.jpg?auth_key=1883087099-63a26707220942c9ae067c30c347f469-0-aea94371825942537b40ace782a4c66b" alt="CRG Logo" class="w-10 h-10 rounded-full object-cover border border-red-800">
+<span class="font-display text-sm md:text-base font-bold tracking-wider" style="color:var(--accent)">C·R·G <span style="color:var(--gold)">STUDIO</span></span>
+</div>
+<nav class="hidden md:flex items-center gap-1" id="main-nav">
+<a class="nav-link active" data-page="home" onclick="navigate('home')">HOME</a>
+<a class="nav-link" data-page="games" onclick="navigate('games')">GAMES</a>
+<a class="nav-link" data-page="blog" onclick="navigate('blog')">BLOG</a>
+<a class="nav-link" data-page="hub" onclick="navigate('hub')">HUB</a>
+<a class="nav-link" data-page="about" onclick="navigate('about')">ABOUT</a>
+<a class="nav-link" data-page="contact" onclick="navigate('contact')">CONTACT</a>
+</nav>
+<div class="flex items-center gap-2">
+<button onclick="openModal('github-modal')" class="btn-secondary text-xs px-3 py-2" title="GitHub"><i class="fab fa-github"></i></button>
+<button onclick="openModal('premium-modal')" class="btn-gold text-xs px-3 py-2"><i class="fas fa-crown mr-1"></i>PRO</button>
+<button id="auth-btn" onclick="handleAuth()" class="btn-primary text-xs px-3 py-2"><i class="fas fa-user mr-1"></i>LOGIN</button>
+<button class="md:hidden btn-secondary text-xs px-3 py-2" onclick="toggleMobileNav()"><i class="fas fa-bars"></i></button>
+</div>
+</div>
+<!-- Mobile Nav -->
+<div id="mobile-nav" class="hidden md:hidden px-4 pb-4 flex flex-col gap-1">
+<a class="nav-link active" data-page="home" onclick="navigate('home');toggleMobileNav()">HOME</a>
+<a class="nav-link" data-page="games" onclick="navigate('games');toggleMobileNav()">GAMES</a>
+<a class="nav-link" data-page="blog" onclick="navigate('blog');toggleMobileNav()">BLOG</a>
+<a class="nav-link" data-page="hub" onclick="navigate('hub');toggleMobileNav()">HUB</a>
+<a class="nav-link" data-page="about" onclick="navigate('about');toggleMobileNav()">ABOUT</a>
+<a class="nav-link" data-page="contact" onclick="navigate('contact');toggleMobileNav()">CONTACT</a>
+</div>
+</header>
+
+<!-- ===================== HOME PAGE ===================== -->
+<section id="page-home" class="page active pt-[70px]">
+<div class="relative min-h-screen flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0" style="background:url('https://z-cdn-media.chatglm.cn/files/3d4a176b-fc5f-4d71-a521-696b1762d8fe.png?auth_key=1883087099-31583a03d05745e2ac81ef44acd3d3f1-0-f1bbae1d098b037eba7c2b81eb9cbf40') center/cover no-repeat;opacity:0.3"></div>
+<div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(10,6,6,0.5),var(--bg))"></div>
+<div class="relative z-10 text-center px-4 max-w-4xl animate-in">
+<img src="https://z-cdn-media.chatglm.cn/files/c1c796b1-e9d8-4a97-a643-61bdab204cd4.png?auth_key=1883087099-967a966e030449f88df16778ae0eebfa-0-94ea89ffc89f9725d5f26116b1bb8bcd" alt="CRG Studio Ecosystem" class="w-48 h-48 md:w-64 md:h-64 mx-auto mb-8 object-contain" style="animation:float 4s ease-in-out infinite;filter:drop-shadow(0 0 30px rgba(255,26,26,0.4))">
+<h1 class="font-display text-4xl md:text-7xl font-black mb-4 glow-text" style="color:var(--accent)">C·R·G STUDIO</h1>
+<p class="text-lg md:text-2xl mb-2 font-light" style="color:var(--gold)">GAMES &middot; MUSIC &middot; VIDEOS &middot; WEBAPPS &middot; BOOKS &middot; SOFTWARE</p>
+<p class="text-base md:text-lg mb-10" style="color:var(--muted)">Forging digital experiences with fire and code. Play our games, explore our ecosystem, join the community.</p>
+<div class="flex flex-wrap justify-center gap-4">
+<button class="btn-primary text-base px-8 py-3" onclick="navigate('games')"><i class="fas fa-gamepad mr-2"></i>PLAY NOW</button>
+<button class="btn-gold text-base px-8 py-3" onclick="openModal('premium-modal')"><i class="fas fa-crown mr-2"></i>GO PREMIUM</button>
+</div>
+<div class="mt-16 grid grid-cols-3 md:grid-cols-6 gap-4 max-w-2xl mx-auto">
+<div class="text-center"><div class="font-display text-2xl font-bold" style="color:var(--accent)">12+</div><div class="text-xs" style="color:var(--muted)">GAMES</div></div>
+<div class="text-center"><div class="font-display text-2xl font-bold" style="color:var(--accent)">50K+</div><div class="text-xs" style="color:var(--muted)">PLAYERS</div></div>
+<div class="text-center"><div class="font-display text-2xl font-bold" style="color:var(--accent)">6</div><div class="text-xs" style="color:var(--muted)">PLATFORMS</div></div>
+<div class="text-center"><div class="font-display text-2xl font-bold" style="color:var(--accent)">4.8</div><div class="text-xs" style="color:var(--muted)">RATING</div></div>
+<div class="text-center"><div class="font-display text-2xl font-bold" style="color:var(--accent)">3</div><div class="text-xs" style="color:var(--muted)">YEARS</div></div>
+<div class="text-center"><div class="font-display text-2xl font-bold" style="color:var(--accent)">24/7</div><div class="text-xs" style="color:var(--muted)">SUPPORT</div></div>
+</div>
+</div>
+</div>
+<!-- Featured Games Preview -->
+<div class="max-w-7xl mx-auto px-4 py-20">
+<h2 class="font-display text-2xl md:text-3xl font-bold mb-10 glow-text" style="color:var(--accent)">FEATURED GAMES</h2>
+<div class="grid md:grid-cols-3 gap-6" id="featured-games"></div>
+</div>
+<!-- Services -->
+<div class="max-w-7xl mx-auto px-4 py-20">
+<h2 class="font-display text-2xl md:text-3xl font-bold mb-10 glow-text" style="color:var(--accent)">OUR ECOSYSTEM</h2>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<div class="card p-6 text-center cursor-pointer"><i class="fas fa-gamepad text-3xl mb-3" style="color:var(--accent)"></i><div class="font-display text-xs font-bold">GAMES</div></div>
+<div class="card p-6 text-center cursor-pointer"><i class="fas fa-music text-3xl mb-3" style="color:var(--gold)"></i><div class="font-display text-xs font-bold">MUSIC</div></div>
+<div class="card p-6 text-center cursor-pointer"><i class="fas fa-play-circle text-3xl mb-3" style="color:var(--accent)"></i><div class="font-display text-xs font-bold">VIDEOS</div></div>
+<div class="card p-6 text-center cursor-pointer"><i class="fas fa-code text-3xl mb-3" style="color:var(--gold)"></i><div class="font-display text-xs font-bold">WEBAPPS</div></div>
+<div class="card p-6 text-center cursor-pointer"><i class="fas fa-book text-3xl mb-3" style="color:var(--accent)"></i><div class="font-display text-xs font-bold">BOOKS</div></div>
+<div class="card p-6 text-center cursor-pointer"><i class="fas fa-cogs text-3xl mb-3" style="color:var(--gold)"></i><div class="font-display text-xs font-bold">SOFTWARE</div></div>
+</div>
+</div>
+</section>
+
+<!-- ===================== GAMES PAGE ===================== -->
+<section id="page-games" class="page pt-[70px]">
+<div class="max-w-7xl mx-auto px-4 py-12">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+<h2 class="font-display text-2xl md:text-3xl font-bold glow-text" style="color:var(--accent)">GAME LIBRARY</h2>
+<div class="flex gap-2 flex-wrap" id="game-filters">
+<button class="btn-primary text-xs active-filter" data-filter="all" onclick="filterGames('all')">ALL</button>
+<button class="btn-secondary text-xs" data-filter="webgl" onclick="filterGames('webgl')">WEBGL</button>
+<button class="btn-secondary text-xs" data-filter="steam" onclick="filterGames('steam')">STEAM</button>
+<button class="btn-secondary text-xs" data-filter="mobile" onclick="filterGames('mobile')">MOBILE</button>
+<button class="btn-secondary text-xs" data-filter="premium" onclick="filterGames('premium')">PREMIUM</button>
+</div>
+</div>
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="game-list"></div>
+</div>
+</section>
+
+<!-- ===================== BLOG PAGE ===================== -->
+<section id="page-blog" class="page pt-[70px]">
+<div class="max-w-7xl mx-auto px-4 py-12">
+<h2 class="font-display text-2xl md:text-3xl font-bold mb-8 glow-text" style="color:var(--accent)">DEV BLOG</h2>
+<div class="grid md:grid-cols-2 gap-8" id="blog-list"></div>
+</div>
+</section>
+
+<!-- ===================== HUB PAGE ===================== -->
+<section id="page-hub" class="page pt-[70px]">
+<div class="max-w-7xl mx-auto px-4 py-12 h-full flex flex-col">
+<h2 class="font-display text-2xl md:text-3xl font-bold mb-8 glow-text" style="color:var(--accent)">COMMUNITY HUB</h2>
+<div class="flex-1 card flex flex-col md:flex-row overflow-hidden" style="min-height:500px">
+<div class="w-full md:w-64 border-b md:border-b-0 md:border-r p-4 flex flex-col gap-2" style="border-color:var(--border);background:rgba(255,26,26,0.02)">
+<div class="text-xs font-bold mb-2 tracking-widest" style="color:var(--muted)">CHANNELS</div>
+<div class="channel-item active" onclick="switchChannel('general', this)"><i class="fas fa-hashtag mr-2"></i>general</div>
+<div class="channel-item" onclick="switchChannel('feedback', this)"><i class="fas fa-hashtag mr-2"></i>feedback</div>
+<div class="channel-item" onclick="switchChannel('dev-logs', this)"><i class="fas fa-hashtag mr-2"></i>dev-logs</div>
+<div class="channel-item" onclick="switchChannel('premium-lounge', this)"><i class="fas fa-crown mr-2 text-yellow-500"></i>premium-lounge</div>
+<div class="mt-auto p-4 rounded-lg" style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.1)">
+<div class="text-xs font-bold mb-1" style="color:var(--gold)">ONLINE</div>
+<div class="text-xl font-bold" style="color:var(--fg)">1,242</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col bg-black/20">
+<div class="p-4 border-b flex items-center justify-between" style="border-color:var(--border)">
+<div class="font-display text-sm font-bold" id="channel-title"># general</div>
+<div class="text-xs" style="color:var(--muted)">Community discussion and updates</div>
+</div>
+<div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4" id="hub-messages"></div>
+<div class="p-4 border-t" style="border-color:var(--border)">
+<div class="flex gap-2">
+<input type="text" id="hub-input" class="input-field flex-1" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendHubMessage()">
+<button onclick="sendHubMessage()" class="btn-primary px-6"><i class="fas fa-paper-plane"></i></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===================== ABOUT PAGE ===================== -->
+<section id="page-about" class="page pt-[70px]">
+<div class="max-w-4xl mx-auto px-4 py-20">
+<h2 class="font-display text-3xl md:text-5xl font-bold mb-8 glow-text text-center" style="color:var(--accent)">BORN FROM FIRE</h2>
+<div class="card p-8 md:p-12 mb-12 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+<p class="text-lg md:text-xl leading-relaxed mb-6" style="color:var(--fg)">C·R·G STUDIO is more than just a game developer. We are a digital forge where code meets creativity. Founded in 2022, we've grown from a solo passion project into a multi-vertical ecosystem covering gaming, music, education, and software development.</p>
+<p class="text-lg md:text-xl leading-relaxed mb-10" style="color:var(--muted)">Our mission is simple: to create experiences that ignite the imagination. Whether it's an addictive browser game, a cinematic music video, or a powerful web application, every C·R·G product is built with performance, aesthetics, and the player in mind.</p>
+<div class="grid md:grid-cols-3 gap-8">
+<div><h4 class="font-display text-sm font-bold mb-2" style="color:var(--accent)">VISION</h4><p class="text-sm" style="color:var(--muted)">Pushing the boundaries of what's possible in the browser and beyond.</p></div>
+<div><h4 class="font-display text-sm font-bold mb-2" style="color:var(--accent)">TECH</h4><p class="text-sm" style="color:var(--muted)">Unity, WebGL, Rust, and AI-assisted workflows drive our innovation.</p></div>
+<div><h4 class="font-display text-sm font-bold mb-2" style="color:var(--accent)">COMMUNITY</h4><p class="text-sm" style="color:var(--muted)">Built by players, for players. Your feedback is our fuel.</p></div>
+</div>
+</div>
+<div class="text-center">
+<h3 class="font-display text-2xl font-bold mb-6">OUR VERTICALS</h3>
+<div class="flex flex-wrap justify-center gap-6">
+<div class="flex items-center gap-2"><i class="fas fa-fire text-red-500"></i> GAMES</div>
+<div class="flex items-center gap-2"><i class="fas fa-fire text-red-500"></i> MUSIC</div>
+<div class="flex items-center gap-2"><i class="fas fa-fire text-red-500"></i> VIDEOS</div>
+<div class="flex items-center gap-2"><i class="fas fa-fire text-red-500"></i> WEBAPPS</div>
+<div class="flex items-center gap-2"><i class="fas fa-fire text-red-500"></i> BOOKS</div>
+<div class="flex items-center gap-2"><i class="fas fa-fire text-red-500"></i> SOFTWARE</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===================== CONTACT PAGE ===================== -->
+<section id="page-contact" class="page pt-[70px]">
+<div class="max-w-7xl mx-auto px-4 py-12">
+<div class="grid md:grid-cols-2 gap-12 items-start">
+<div>
+<h2 class="font-display text-3xl md:text-4xl font-bold mb-6 glow-text" style="color:var(--accent)">GET IN TOUCH</h2>
+<p class="text-lg mb-10" style="color:var(--muted)">Have a question, feedback, or a business inquiry? We'd love to hear from you. The forge is always open.</p>
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-4"><div class="w-12 h-12 rounded-lg bg-red-600/10 flex items-center justify-center border border-red-900/30"><i class="fas fa-envelope text-red-500"></i></div><div><div class="text-xs font-bold" style="color:var(--muted)">EMAIL</div><div class="text-lg">contact@crgstudio.com</div></div></div>
+<div class="flex items-center gap-4"><div class="w-12 h-12 rounded-lg bg-red-600/10 flex items-center justify-center border border-red-900/30"><i class="fab fa-discord text-red-500"></i></div><div><div class="text-xs font-bold" style="color:var(--muted)">DISCORD</div><div class="text-lg">CRG_Studio_Official</div></div></div>
+<div class="flex items-center gap-4"><div class="w-12 h-12 rounded-lg bg-red-600/10 flex items-center justify-center border border-red-900/30"><i class="fab fa-twitter text-red-500"></i></div><div><div class="text-xs font-bold" style="color:var(--muted)">TWITTER/X</div><div class="text-lg">@CRG_Studio</div></div></div>
+</div>
+</div>
+<div class="card p-8">
+<form onsubmit="submitContact(event)" class="flex flex-col gap-4">
+<div class="grid grid-cols-2 gap-4">
+<div><label class="text-xs font-bold mb-2 block" style="color:var(--muted)">NAME</label><input type="text" required class="input-field" placeholder="Your Name"></div>
+<div><label class="text-xs font-bold mb-2 block" style="color:var(--muted)">EMAIL</label><input type="email" required class="input-field" placeholder="email@example.com"></div>
+</div>
+<div><label class="text-xs font-bold mb-2 block" style="color:var(--muted)">SUBJECT</label><input type="text" required class="input-field" placeholder="What is this about?"></div>
+<div><label class="text-xs font-bold mb-2 block" style="color:var(--muted)">MESSAGE</label><textarea required class="input-field" placeholder="Tell us more..."></textarea></div>
+<button type="submit" class="btn-primary w-full py-4 mt-2">SEND MESSAGE</button>
+</form>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="py-12 border-t" style="border-color:var(--border);background:rgba(10,6,6,0.5)">
+<div class="max-w-7xl mx-auto px-4">
+<div class="grid md:grid-cols-4 gap-12 mb-12">
+<div class="col-span-1 md:col-span-2">
+<div class="flex items-center gap-3 mb-6">
+<img src="https://z-cdn-media.chatglm.cn/files/09d4519f-13d4-4c17-b1b8-b41b9aa76717.jpg?auth_key=1883087099-63a26707220942c9ae067c30c347f469-0-aea94371825942537b40ace782a4c66b" alt="CRG Logo" class="w-12 h-12 rounded-full object-cover border border-red-800">
+<span class="font-display text-xl font-bold tracking-wider" style="color:var(--accent)">C·R·G <span style="color:var(--gold)">STUDIO</span></span>
+</div>
+<p class="text-sm max-w-md mb-6" style="color:var(--muted)">Independent game development studio and digital ecosystem. Forging experiences through fire and code since 2022.</p>
+<div class="flex gap-4">
+<a href="#" class="text-lg hover:text-red-500 transition-colors"><i class="fab fa-github"></i></a>
+<a href="#" class="text-lg hover:text-red-500 transition-colors"><i class="fab fa-discord"></i></a>
+<a href="#" class="text-lg hover:text-red-500 transition-colors"><i class="fab fa-twitter"></i></a>
+<a href="#" class="text-lg hover:text-red-500 transition-colors"><i class="fab fa-linkedin"></i></a>
+<a href="#" class="text-lg hover:text-red-500 transition-colors"><i class="fab fa-youtube"></i></a>
+</div>
+</div>
+<div>
+<h4 class="font-display text-xs font-bold mb-6 tracking-widest" style="color:var(--accent)">NAVIGATION</h4>
+<ul class="flex flex-col gap-3 text-sm" style="color:var(--muted)">
+<li><a href="#" onclick="navigate('home')" class="hover:text-red-500">Home</a></li>
+<li><a href="#" onclick="navigate('games')" class="hover:text-red-500">Games</a></li>
+<li><a href="#" onclick="navigate('blog')" class="hover:text-red-500">Blog</a></li>
+<li><a href="#" onclick="navigate('hub')" class="hover:text-red-500">Hub</a></li>
+<li><a href="#" onclick="navigate('about')" class="hover:text-red-500">About</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-display text-xs font-bold mb-6 tracking-widest" style="color:var(--accent)">LEGAL</h4>
+<ul class="flex flex-col gap-3 text-sm" style="color:var(--muted)">
+<li><a href="#" class="hover:text-red-500">Terms of Service</a></li>
+<li><a href="#" class="hover:text-red-500">Privacy Policy</a></li>
+<li><a href="#" class="hover:text-red-500">Cookie Policy</a></li>
+<li><a href="#" class="hover:text-red-500">End User License</a></li>
+</ul>
+</div>
+</div>
+<div class="flex flex-col md:flex-row items-center justify-between pt-8 border-t" style="border-color:var(--border)">
+<div class="text-xs mb-4 md:mb-0" style="color:var(--muted)">&copy; 2026 C·R·G STUDIO. ALL RIGHTS RESERVED.</div>
+<div class="text-xs" style="color:var(--muted)">MADE WITH <i class="fas fa-heart text-red-600 mx-1"></i> IN EGYPT</div>
+</div>
+</div>
+</footer>
+
+<!-- ===================== MODALS ===================== -->
+<!-- Auth Modal -->
+<div id="auth-modal" class="modal-overlay" onclick="if(event.target===this)closeModal('auth-modal')">
+<div class="modal">
+<h2 class="font-display text-xl font-bold mb-6 glow-text" style="color:var(--accent)">ADMIN LOGIN</h2>
+<form onsubmit="login(event)" class="flex flex-col gap-4">
+<div><label class="text-xs font-bold mb-2 block" style="color:var(--muted)">EMAIL</label><input type="email" id="login-email" required class="input-field" placeholder="admin@crgstudio.com"></div>
+<div><label class="text-xs font-bold mb-2 block" style="color:var(--muted)">PASSWORD</label><input type="password" required class="input-field" placeholder="••••••••"></div>
+<button type="submit" class="btn-primary py-3 mt-2">AUTHENTICATE</button>
+<div class="text-center text-xs" style="color:var(--muted)">Demo: Use any email to login as admin</div>
+</form>
+</div>
+</div>
+
+<!-- GitHub Modal -->
+<div id="github-modal" class="modal-overlay" onclick="if(event.target===this)closeModal('github-modal')">
+<div class="modal modal-lg">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-display text-xl font-bold glow-text" style="color:var(--accent)"><i class="fab fa-github mr-2"></i>GITHUB INTEGRATION</h2>
+<button onclick="closeModal('github-modal')" class="text-muted hover:text-white"><i class="fas fa-times"></i></button>
+</div>
+<div id="gh-not-connected" class="text-center py-12">
+<i class="fab fa-github text-6xl mb-6 opacity-20"></i>
+<p class="mb-8" style="color:var(--muted)">Connect your GitHub account to import games, sync source code, and deploy projects directly from C·R·G STUDIO.</p>
+<button onclick="simulateGitHubConnect()" class="btn-primary px-8 py-3">CONNECT GITHUB ACCOUNT</button>
+</div>
+<div id="gh-connected" style="display:none">
+<div class="grid md:grid-cols-2 gap-8">
+<div>
+<h3 class="font-display text-sm font-bold mb-4" style="color:var(--gold)">REPOSITORIES</h3>
+<div class="flex flex-col gap-2 max-height-[300px] overflow-y-auto pr-2" id="gh-repos"></div>
+</div>
+<div class="flex flex-col gap-4">
+<h3 class="font-display text-sm font-bold mb-2" style="color:var(--gold)">ACTIONS</h3>
+<button onclick="ghAction('import')" class="btn-secondary w-full text-left flex items-center justify-between"><span>Import Selected as Games</span><i class="fas fa-download"></i></button>
+<button onclick="ghAction('export')" class="btn-secondary w-full text-left flex items-center justify-between"><span>Export Site Data to Repo</span><i class="fas fa-upload"></i></button>
+<button onclick="ghAction('sync')" class="btn-secondary w-full text-left flex items-center justify-between"><span>Sync All Repositories</span><i class="fas fa-sync"></i></button>
+<div class="mt-auto p-4 rounded-lg" style="background:rgba(0,200,100,0.05);border:1px solid rgba(0,200,100,0.1)">
+<div class="text-xs font-bold text-green-500 mb-1">STATUS: CONNECTED</div>
+<div class="text-xs" style="color:var(--muted)">Account: <strong>CRG_Dev_Team</strong></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Premium Modal -->
+<div id="premium-modal" class="modal-overlay" onclick="if(event.target===this)closeModal('premium-modal')">
+<div class="modal modal-lg">
+<div class="text-center mb-10">
+<h2 class="font-display text-2xl md:text-3xl font-bold mb-2 glow-text" style="color:var(--gold)"><i class="fas fa-crown mr-2"></i>GO PREMIUM</h2>
+<p style="color:var(--muted)">Unlock the full potential of the C·R·G STUDIO ecosystem.</p>
+</div>
+<div class="grid md:grid-cols-3 gap-6">
+<div class="pricing-card">
+<div class="font-display text-sm font-bold mb-2" style="color:var(--muted)">FREE</div>
+<div class="font-display text-4xl font-black mb-1">$0</div>
+<div class="text-xs mb-6" style="color:var(--muted)">Forever</div>
+<ul class="text-sm text-left mb-6 flex flex-col gap-2" style="color:var(--muted)">
+<li><i class="fas fa-check mr-2 text-green-500"></i>Play demo games</li>
+<li><i class="fas fa-check mr-2 text-green-500"></i>Community Hub access</li>
+<li><i class="fas fa-times mr-2 text-red-500"></i>Ads included</li>
+<li><i class="fas fa-times mr-2 text-red-500"></i>No source access</li>
+</ul>
+<button class="btn-secondary w-full text-xs" disabled>CURRENT PLAN</button>
+</div>
+<div class="pricing-card featured">
+<div class="badge-premium mb-2">MOST POPULAR</div>
+<div class="font-display text-sm font-bold mb-2" style="color:var(--gold)">PRO</div>
+<div class="font-display text-4xl font-black mb-1" style="color:var(--gold)">$4.99</div>
+<div class="text-xs mb-6" style="color:var(--muted)">/month</div>
+<ul class="text-sm text-left mb-6 flex flex-col gap-2" style="color:var(--muted)">
+<li><i class="fas fa-check mr-2" style="color:var(--gold)"></i>Full game library</li>
+<li><i class="fas fa-check mr-2" style="color:var(--gold)"></i>Ad-free experience</li>
+<li><i class="fas fa-check mr-2" style="color:var(--gold)"></i>Early access titles</li>
+<li><i class="fas fa-check mr-2" style="color:var(--gold)"></i>Priority support</li>
+</ul>
+<button class="btn-gold w-full text-xs" onclick="showToast('Payment processing... (demo)','info')">UPGRADE NOW</button>
+</div>
+<div class="pricing-card">
+<div class="font-display text-sm font-bold mb-2" style="color:var(--accent)">STUDIO</div>
+<div class="font-display text-4xl font-black mb-1" style="color:var(--accent)">$14.99</div>
+<div class="text-xs mb-6" style="color:var(--muted)">/month</div>
+<ul class="text-sm text-left mb-6 flex flex-col gap-2" style="color:var(--muted)">
+<li><i class="fas fa-check mr-2" style="color:var(--accent)"></i>All Pro features</li>
+<li><i class="fas fa-check mr-2" style="color:var(--accent)"></i>Source code access</li>
+<li><i class="fas fa-check mr-2" style="color:var(--accent)"></i>Dev tools & SDK</li>
+<li><i class="fas fa-check mr-2" style="color:var(--accent)"></i>AI assistant premium</li>
+<li><i class="fas fa-check mr-2" style="color:var(--accent)"></i>GitHub sync</li>
+</ul>
+<button class="btn-primary w-full text-xs" onclick="showToast('Payment processing... (demo)','info')">GO STUDIO</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ===================== AI ASSISTANT WIDGET ===================== -->
+<div id="ai-widget">
+<div id="ai-panel">
+<div class="p-4 border-b flex items-center justify-between" style="border-color:var(--border);background:linear-gradient(135deg,rgba(255,26,26,0.1),transparent)">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg,var(--accent),#880000)"><i class="fas fa-fire text-sm text-white"></i></div>
+<div><div class="font-display text-xs font-bold" style="color:var(--accent)">CRG AI</div><div class="text-xs" id="ai-status" style="color:var(--muted)">Online</div></div>
+</div>
+<div class="flex gap-2">
+<button onclick="toggleAIEdit()" class="text-xs px-2 py-1 rounded" style="background:rgba(255,215,0,0.1);color:var(--gold);border:none;cursor:pointer" id="ai-edit-btn" title="Toggle Live Edit Mode"><i class="fas fa-edit"></i></button>
+<button onclick="toggleAIVoice()" class="text-xs px-2 py-1 rounded" style="background:rgba(255,26,26,0.1);color:var(--accent);border:none;cursor:pointer" id="ai-voice-btn" title="Toggle Voice"><i class="fas fa-volume-up"></i></button>
+<button onclick="toggleAIPanel()" class="text-xs px-2 py-1 rounded" style="background:rgba(255,255,255,0.05);color:var(--muted);border:none;cursor:pointer"><i class="fas fa-times"></i></button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" id="ai-messages" style="max-height:380px"></div>
+<div class="p-3 border-t flex gap-2 items-center" style="border-color:var(--border)">
+<button id="mic-btn" onclick="toggleListening()" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(255,26,26,0.15);border:1px solid var(--border);color:var(--accent);cursor:pointer;transition:all .3s" title="Voice Input"><i class="fas fa-microphone"></i></button>
+<input type="text" id="ai-input" class="input-field flex-1 text-sm" placeholder="Ask CRG AI anything..." onkeydown="if(event.key==='Enter')sendAIMessage()" style="padding:8px 12px">
+<button onclick="sendAIMessage()" class="btn-primary px-3 py-2 text-xs"><i class="fas fa-paper-plane"></i></button>
+</div>
+</div>
+<button id="ai-btn" onclick="toggleAIPanel()" aria-label="Open AI Assistant"><i class="fas fa-fire"></i></button>
+</div>
+
+<!-- ===================== TOAST CONTAINER ===================== -->
+<div id="toast-container"></div>
+
+<script>
+/* ===================================================================
+   C·R·G STUDIO — Complete Portfolio Application
+   =================================================================== */
+
+// ===== STATE =====
+const state = {
+  currentPage: 'home',
+  isAdmin: false,
+  adminEmail: '',
+  aiVoiceEnabled: true,
+  aiEditMode: false,
+  isListening: false,
+  currentChannel: 'general',
+  games: [],
+  posts: [],
+  hubMessages: {},
+  ghConnected: false,
+  editMode: false
+};
+
+// ===== SAMPLE DATA =====
+const defaultGames = [
+  {
+    id: 'g1', title: 'Inferno Run', desc: 'Dodge fire obstacles in this endless runner. How far can you go?',
+    type: 'webgl', tags: ['runner','action','arcade'], premium: false, featured: true,
+    thumb: 'https://picsum.photos/seed/inferno/400/225',
+    code: `<html><body style="margin:0;background:#0a0606;overflow:hidden"><canvas id="c"></canvas><script>
+var c=document.getElementById('c'),ctx=c.getContext('2d');c.width=c.parentElement.clientWidth;c.height=c.parentElement.clientHeight;
+var p={x:60,y:0,w:28,h:28,vy:0,gnd:false,score:0};p.y=c.height-58;var obs=[],sp=3.5,frame=0,particles=[];
+function jump(){if(p.gnd){p.vy=-11;p.gnd=false;}}
+c.onclick=jump;document.onkeydown=function(e){if(e.code==='Space'){e.preventDefault();jump();}};
+function addParticle(x,y){particles.push({x:x,y:y,vx:(Math.random()-0.5)*3,vy:-Math.random()*4,life:30,color:Math.random()>0.5?'#ff2222':'#ffd700'});}
+function update(){frame++;p.vy+=0.55;p.y+=p.vy;if(p.y>=c.height-58){p.y=c.height-58;p.gnd=true;}
+if(frame%Math.max(30,80-Math.floor(p.score/200))===0){var h=25+Math.random()*35;obs.push({x:c.width+10,y:c.height-30-h,w:18+Math.random()*15,h:h});}
+obs.forEach(function(o){o.x-=sp;});obs=obs.filter(function(o){return o.x>-50;});
+for(var i=0;i<obs.length;i++){var o=obs[i];if(p.x<o.x+o.w&&p.x+p.w>o.x&&p.y<o.y+o.h&&p.y+p.h>o.y){
+p.score=0;obs=[];sp=3.5;for(var j=0;j<20;j++)addParticle(p.x+p.w/2,p.y+p.h/2);return;}}
+if(frame%3===0)addParticle(p.x,p.y+p.h);
+particles.forEach(function(pt){pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=0.15;pt.life--;});particles=particles.filter(function(pt){return pt.life>0;});
+p.score++;if(p.score%500===0)sp+=0.4;}
+function draw(){ctx.fillStyle='#0a0606';ctx.fillRect(0,0,c.width,c.height);
+ctx.fillStyle='#1a0808';ctx.fillRect(0,c.height-30,c.width,30);
+ctx.strokeStyle='#ff222233';ctx.lineWidth=1;for(var i=0;i<c.width;i+=40){ctx.beginPath();ctx.moveTo(i+((frame*2)%40),c.height-30);ctx.lineTo(i+((frame*2)%40),c.height);ctx.stroke();}
+ctx.fillStyle='#ffd700';ctx.shadowColor='#ffd700';ctx.shadowBlur=10;ctx.fillRect(p.x,p.y,p.w,p.h);ctx.shadowBlur=0;
+ctx.fillStyle='#ff3333';ctx.shadowColor='#ff0000';ctx.shadowBlur=8;obs.forEach(function(o){ctx.fillRect(o.x,o.y,o.w,o.h);});ctx.shadowBlur=0;
+particles.forEach(function(pt){ctx.globalAlpha=pt.life/30;ctx.fillStyle=pt.color;ctx.fillRect(pt.x,pt.y,3,3);});ctx.globalAlpha=1;
+ctx.fillStyle='#ffffff';ctx.font='bold 16px Orbitron,monospace';ctx.fillText('SCORE: '+p.score,12,24);
+ctx.fillStyle='#8a6a6a';ctx.font='12px sans-serif';ctx.fillText('Click or Space to jump',12,44);}
+function loop(){update();draw();requestAnimationFrame(loop);}loop();<\/script></body></html>`
+  },
+  {
+    id: 'g2', title: 'Neon Blaster', desc: 'Shoot down waves of enemies in this retro space shooter.',
+    type: 'webgl', tags: ['shooter','space','neon'], premium: false, featured: true,
+    thumb: 'https://picsum.photos/seed/neonblast/400/225',
+    code: `<html><body style="margin:0;background:#050510;overflow:hidden"><canvas id="c"></canvas><script>
+var c=document.getElementById('c'),ctx=c.getContext('2d');c.width=c.parentElement.clientWidth;c.height=c.parentElement.clientHeight;
+var pl={x:c.width/2-15,y:c.height-60,w:30,h:30},bullets=[],enemies=[],score=0,lives=3,frame=0,keys={},stars=[];
+for(var i=0;i<80;i++)stars.push({x:Math.random()*c.width,y:Math.random()*c.height,s:Math.random()*2+0.5,sp:Math.random()*1+0.3});
+document.onkeydown=function(e){keys[e.code]=true;};document.onkeyup=function(e){keys[e.code]=false;};
+c.onclick=function(){bullets.push({x:pl.x+pl.w/2-2,y:pl.y-6,w:4,h:10});};
+function update(){frame++;
+if(keys['ArrowLeft']||keys['KeyA'])pl.x-=5;if(keys['ArrowRight']||keys['KeyD'])pl.x+=5;
+pl.x=Math.max(0,Math.min(c.width-pl.w,pl.x));
+if(frame%8===0)bullets.push({x:pl.x+pl.w/2-2,y:pl.y-6,w:4,h:10});
+if(frame%Math.max(20,60-Math.floor(score/100))===0){enemies.push({x:Math.random()*(c.width-20),y:-20,w:20,h:20,sp:1.5+Math.random()*2+score/500});}
+bullets.forEach(function(b){b.y-=7;});bullets=bullets.filter(function(b){return b.y>-20;});
+enemies.forEach(function(e){e.y+=e.sp;});
+for(var i=enemies.length-1;i>=0;i--){var e=enemies[i];if(e.y>c.height){enemies.splice(i,1);lives--;if(lives<=0){score=0;lives=3;enemies=[];}}
+for(var j=bullets.length-1;j>=0;j--){var b=bullets[j];if(b.x<e.x+e.w&&b.x+b.w>e.x&&b.y<e.y+e.h&&b.y+b.h>e.y){enemies.splice(i,1);bullets.splice(j,1);score+=10;break;}}
+if(e&&pl.x<e.x+e.w&&pl.x+pl.w>e.x&&pl.y<e.y+e.h&&pl.y+pl.h>e.y){enemies.splice(i,1);lives--;if(lives<=0){score=0;lives=3;enemies=[];}}}
+stars.forEach(function(s){s.y+=s.sp;if(s.y>c.height){s.y=0;s.x=Math.random()*c.width;}});}
+function draw(){ctx.fillStyle='#050510';ctx.fillRect(0,0,c.width,c.height);
+ctx.fillStyle='#ffffff33';stars.forEach(function(s){ctx.fillRect(s.x,s.y,s.s,s.s);});
+ctx.fillStyle='#00ffaa';ctx.shadowColor='#00ffaa';ctx.shadowBlur=12;ctx.fillRect(pl.x,pl.y,pl.w,pl.h);ctx.shadowBlur=0;
+ctx.fillStyle='#00ffff';ctx.shadowColor='#00ffff';ctx.shadowBlur=6;bullets.forEach(function(b){ctx.fillRect(b.x,b.y,b.w,b.h);});ctx.shadowBlur=0;
+ctx.fillStyle='#ff0066';ctx.shadowColor='#ff0066';ctx.shadowBlur=8;enemies.forEach(function(e){ctx.fillRect(e.x,e.y,e.w,e.h);});ctx.shadowBlur=0;
+ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.fillText('SCORE: '+score,10,20);ctx.fillStyle='#ff3366';ctx.fillText('LIVES: '+lives,10,38);
+ctx.fillStyle='#555';ctx.font='11px sans-serif';ctx.fillText('Arrows/WASD to move, auto-fire + click to shoot',10,c.height-10);}
+function loop(){update();draw();requestAnimationFrame(loop);}loop();<\/script></body></html>`
+  },
+  {
+    id: 'g3', title: 'Shadow Protocol', desc: 'Stealth action thriller now on Epic Games Store.',
+    type: 'epic', tags: ['stealth','action','3d'], premium: false, featured: false,
+    thumb: 'https://picsum.photos/seed/shadow/400/225',
+    link: 'https://store.epicgames.com/'
+  },
+  {
+    id: 'g4', title: 'Pocket Arena', desc: 'Fast-paced mobile PvP battles. Available on Android.',
+    type: 'playstore', tags: ['pvp','mobile','arena'], premium: false, featured: false,
+    thumb: 'https://picsum.photos/seed/pocket/400/225',
+    link: 'https://play.google.com/store'
+  },
+  {
+    id: 'g5', title: 'Crystal Maze', desc: 'Puzzle adventure for iOS devices.',
+    type: 'appstore', tags: ['puzzle','adventure','ios'], premium: true, featured: false,
+    thumb: 'https://picsum.photos/seed/crystal/400/225',
+    link: 'https://apps.apple.com/'
+  },
+  {
+    id: 'g6', title: 'Cyber Drift', desc: 'Premium WebGL racing experience with neon aesthetics.',
+    type: 'webgl', tags: ['racing','premium','neon'], premium: true, featured: true,
+    thumb: 'https://picsum.photos/seed/cyberdrift/400/225',
+    code: `<html><body style="margin:0;background:#0a0510;overflow:hidden"><canvas id="c"></canvas><script>
+var c=document.getElementById('c'),ctx=c.getContext('2d');c.width=c.parentElement.clientWidth;c.height=c.parentElement.clientHeight;
+var road=[],car={lane:1},score=0,speed=3,frame=0,obs=[];
+for(var i=0;i<20;i++)road.push(i*40);
+function mov(e){var x=e.clientX||e.touches[0].clientX;var w=c.width/3;car.lane=x<w?0:x<w*2?1:2;}
+c.onmousemove=mov;c.ontouchmove=function(e){e.preventDefault();mov(e);};
+function update(){frame++;speed=3+score/300;
+road.forEach(function(r){r-=speed;if(r<-40)r+=800;});
+if(frame%Math.max(25,70-Math.floor(score/200))===0){obs.push({lane:Math.floor(Math.random()*3),y:-40});}
+obs.forEach(function(o){o.y+=speed;});
+obs=obs.filter(function(o){return o.y<c.height+40;});
+for(var i=obs.length-1;i>=0;i--){if(obs[i].lane===car.lane&&obs[i].y>c.height-100&&obs[i].y<c.height-60){score=Math.max(0,score-50);obs.splice(i,1);}}
+score++;}
+function draw(){ctx.fillStyle='#0a0510';ctx.fillRect(0,0,c.width,c.height);
+var lw=c.width/3;for(var l=0;l<3;l++){ctx.fillStyle=l===car.lane?'#1a0a2a':'#0d0518';ctx.fillRect(l*lw,0,lw,c.height);}
+ctx.strokeStyle='#ff00ff22';ctx.lineWidth=2;for(var l=1;l<3;l++){ctx.beginPath();ctx.setLineDash([20,20]);ctx.moveTo(l*lw,0);ctx.lineTo(l*lw,c.height);ctx.stroke();}ctx.setLineDash([]);
+ctx.strokeStyle='#ff00ff15';for(var i=0;i<road.length;i++){ctx.beginPath();ctx.moveTo(0,road[i]);ctx.lineTo(c.width,road[i]);ctx.stroke();}
+var cx=car.lane*lw+lw/2-15,cy=c.height-80;
+ctx.fillStyle='#ff00ff';ctx.shadowColor='#ff00ff';ctx.shadowBlur=20;ctx.fillRect(cx,cy,30,50);ctx.shadowBlur=0;
+ctx.fillStyle='#00ffff';ctx.shadowColor='#00ffff';ctx.shadowBlur=15;obs.forEach(function(o){ctx.fillRect(o.lane*lw+lw/2-15,o.y,30,40);});ctx.shadowBlur=0;
+ctx.fillStyle='#fff';ctx.font='bold 16px monospace';ctx.fillText('SCORE: '+score,12,24);
+ctx.fillStyle='#888';ctx.font='11px sans-serif';ctx.fillText('Move mouse to change lane',12,c.height-10);}
+function loop(){update();draw();requestAnimationFrame(loop);}loop();<\/script></body></html>`
+  },
+  {
+    id: 'g7', title: 'Iron Vanguard', desc: 'Mech combat simulator on Steam.',
+    type: 'steam', tags: ['mech','combat','3d'], premium: false, featured: false,
+    thumb: 'https://picsum.photos/seed/ironvanguard/400/225',
+    link: 'https://store.steampowered.com/'
+  }
+];
+
+const defaultPosts = [
+  { id: 'p1', title: 'Dev Log #12: Inferno Run 2.0 Update', content: 'We just shipped the biggest update to Inferno Run — new obstacles, power-ups, and a completely revamped scoring system. The game now features dynamic difficulty scaling that adapts to your skill level in real-time...', cover: 'https://picsum.photos/seed/devlog12/400/200', cat: 'Dev Log', date: '2025-01-15' },
+  { id: 'p2', title: 'C·R·G STUDIO 2025 Roadmap', content: 'Exciting news! This year we are expanding to 6 new game titles, launching our premium subscription, and opening our AI-powered development toolkit to the community. Here is everything we have planned...', cover: 'https://picsum.photos/seed/roadmap25/400/200', cat: 'Announcement', date: '2025-01-10' },
+  { id: 'p3', title: 'WebGL Performance Deep Dive', content: 'Getting 60fps in the browser is harder than it looks. In this technical post, we break down our rendering pipeline, share our texture atlas strategy, and explain how we handle garbage collection pauses...', cover: 'https://picsum.photos/seed/webglperf/400/200', cat: 'Tutorial', date: '2025-01-05' },
+  { id: 'p4', title: 'How We Designed Neon Blaster', content: 'Behind every neon glow is hours of color theory, shader math, and iteration. This is the story of how Neon Blaster went from a weekend prototype to a polished arcade experience...', cover: 'https://picsum.photos/seed/neondesign/400/200', cat: 'Behind the Scenes', date: '2024-12-28' }
+];
+
+const defaultHubMessages = {
+  general: [
+    { user: 'CRG_Bot', text: 'Welcome to the C·R·G STUDIO community hub! Be respectful and have fun.', time: '10:00', isBot: true },
+    { user: 'PlayerOne', text: 'Just hit 5000 score on Inferno Run! This game is addictive.', time: '10:15' },
+    { user: 'NeonFan99', text: 'Neon Blaster is incredible for a browser game. How did you get the glow effects?', time: '10:22' },
+    { user: 'GameDev_Lisa', text: 'Any plans for multiplayer? Would love to race against friends.', time: '10:45' }
+  ],
+  feedback: [
+    { user: 'CRG_Bot', text: 'Share your thoughts and suggestions here. We read everything!', time: '09:00', isBot: true },
+    { user: 'HardcoreGamer', text: 'Need more levels in Cyber Drift. The current ones are too easy.', time: '11:20' }
+  ],
+  'dev-logs': [
+    { user: 'CRG_Bot', text: 'Technical discussions about our development process.', time: '08:30', isBot: true },
+    { user: 'CoderMax', text: 'The WebGL performance post was super helpful. Thanks!', time: '14:10' }
+  ],
+  'premium-lounge': [
+    { user: 'CRG_Bot', text: 'Exclusive channel for our Pro and Studio members.', time: '12:00', isBot: true },
+    { user: 'ElitePlayer', text: 'Loving the early access to Shadow Protocol. The stealth mechanics are solid.', time: '16:45' }
+  ]
+};
+
+// ===== CORE ENGINE =====
+function init() {
+  loadState();
+  if (state.games.length === 0) state.games = defaultGames;
+  if (state.posts.length === 0) state.posts = defaultPosts;
+  if (Object.keys(state.hubMessages).length === 0) state.hubMessages = defaultHubMessages;
+
+  initCanvas();
+  renderFeaturedGames();
+  renderGames();
+  renderBlog();
+  renderHub();
+  initAI();
+
+  // Listen for voice synth ready
+  if (speechSynth.onvoiceschanged !== undefined) {
+    speechSynth.onvoiceschanged = () => {};
+  }
+
+  // Handle URL navigation
+  const hash = window.location.hash.replace('#', '');
+  if (hash) navigate(hash);
+
+  console.log('C·R·G STUDIO Initialized');
+}
+
+function loadState() {
+  const saved = localStorage.getItem('crg_state');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    Object.assign(state, parsed);
+    if (state.isAdmin) updateAuthUI();
+  }
+}
+
+function saveState() {
+  localStorage.setItem('crg_state', JSON.stringify(state));
+}
+
+// ===== NAVIGATION =====
+function navigate(pageId) {
+  state.currentPage = pageId;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + pageId);
+  if (target) {
+    target.classList.add('active');
+    window.scrollTo(0, 0);
+    window.location.hash = pageId;
+  }
+
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.getAttribute('data-page') === pageId);
+  });
+
+  saveState();
+}
+
+function toggleMobileNav() {
+  document.getElementById('mobile-nav').classList.toggle('hidden');
+}
+
+// ===== BACKGROUND CANVAS =====
+function initCanvas() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      size: Math.random() * 2 + 0.5,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      color: Math.random() > 0.5 ? '#ff1a1a' : '#3a1515'
+    });
+  }
+
+  function draw() {
+    ctx.fillStyle = '#0a0606';
+    ctx.fillRect(0, 0, w, h);
+
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = w;
+      if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h;
+      if (p.y > h) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.4;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ===== AUTHENTICATION =====
+function handleAuth() {
+  if (state.isAdmin) {
+    state.isAdmin = false;
+    state.adminEmail = '';
+    updateAuthUI();
+    showToast('Logged out successfully', 'info');
+    saveState();
+    if (state.editMode) toggleAIEdit();
+  } else {
+    openModal('auth-modal');
+  }
+}
+
+function login(e) {
+  e.preventDefault();
+  state.isAdmin = true;
+  state.adminEmail = document.getElementById('login-email').value;
+  closeModal('auth-modal');
+  updateAuthUI();
+  showToast('Welcome back, Admin!', 'success');
+  saveState();
+}
+
+function updateAuthUI() {
+  const btn = document.getElementById('auth-btn');
+  if (state.isAdmin) {
+    btn.innerHTML = '<i class="fas fa-sign-out-alt mr-1"></i>LOGOUT';
+    btn.classList.replace('btn-primary', 'btn-secondary');
+  } else {
+    btn.innerHTML = '<i class="fas fa-user mr-1"></i>LOGIN';
+    btn.classList.replace('btn-secondary', 'btn-primary');
+  }
+}
+
+// ===== UI HELPERS =====
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  document.body.style.overflow = 'auto';
+}
+
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'} mr-2"></i>${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ===== GAMES ENGINE =====
+function renderFeaturedGames() {
+  const container = document.getElementById('featured-games');
+  if (!container) return;
+  const featured = state.games.filter(g => g.featured).slice(0, 3);
+  container.innerHTML = featured.map(g => createGameCard(g)).join('');
+}
+
+function renderGames(filter = 'all') {
+  const container = document.getElementById('game-list');
+  if (!container) return;
+  let filtered = state.games;
+  if (filter !== 'all') {
+    if (filter === 'premium') filtered = state.games.filter(g => g.premium);
+    else filtered = state.games.filter(g => g.type === filter);
+  }
+  container.innerHTML = filtered.map(g => createGameCard(g)).join('');
+}
+
+function filterGames(filter) {
+  document.querySelectorAll('#game-filters button').forEach(b => {
+    b.classList.toggle('btn-primary', b.getAttribute('data-filter') === filter);
+    b.classList.toggle('btn-secondary', b.getAttribute('data-filter') !== filter);
+  });
+  renderGames(filter);
+}
+
+function createGameCard(g) {
+  const iconMap = { webgl: 'fa-globe', steam: 'fa-steam', epic: 'fa-rocket', mobile: 'fa-mobile-alt', playstore: 'fa-google-play', appstore: 'fa-apple' };
+  return `
+    <div class="card overflow-hidden flex flex-col h-full animate-in">
+      <div class="relative aspect-video overflow-hidden group">
+        <img src="${g.thumb}" alt="${g.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+          ${g.type === 'webgl' ? `<button onclick="playGame('${g.id}')" class="btn-primary text-xs"><i class="fas fa-play mr-1"></i>PLAY NOW</button>` : `<a href="${g.link}" target="_blank" class="btn-primary text-xs"><i class="fas fa-external-link-alt mr-1"></i>VISIT STORE</a>`}
+        </div>
+        ${g.premium ? '<div class="absolute top-2 right-2 badge-premium badge"><i class="fas fa-crown mr-1"></i>PREMIUM</div>' : ''}
+        <div class="absolute bottom-2 left-2 flex gap-1">${g.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="p-5 flex-1 flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-display text-sm font-bold uppercase tracking-wider">${g.title}</h3>
+          <i class="fab ${iconMap[g.type] || 'fa-gamepad'}" style="color:var(--muted)"></i>
+        </div>
+        <p class="text-xs mb-4 flex-1" style="color:var(--muted)">${g.desc}</p>
+        <div class="flex items-center justify-between mt-auto pt-4 border-t" style="border-color:var(--border)">
+          <div class="text-[10px] font-bold" style="color:var(--accent)">${g.type.toUpperCase()}</div>
+          <button onclick="${g.type === 'webgl' ? `playGame('${g.id}')` : `window.open('${g.link}','_blank')`}" class="text-[10px] font-bold hover:text-white transition-colors" style="color:var(--gold)">VIEW DETAILS <i class="fas fa-arrow-right ml-1"></i></button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function playGame(id) {
+  const game = state.games.find(g => g.id === id);
+  if (!game) return;
+  if (game.premium && !state.isAdmin) {
+    openModal('premium-modal');
+    return;
+  }
+  // Create a temporary play modal
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.id = 'play-modal';
+  overlay.innerHTML = `
+    <div class="modal modal-lg" style="padding:0;overflow:hidden">
+      <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--border);background:var(--bg2)">
+        <h3 class="font-display text-sm font-bold" style="color:var(--accent)">PLAYING: ${game.title}</h3>
+        <button onclick="document.getElementById('play-modal').remove();document.body.style.overflow='auto'" class="text-muted hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+      <iframe id="game-frame" class="game-iframe"></iframe>
+      <div class="p-4 bg-black/40 text-center text-[10px]" style="color:var(--muted)">
+        <i class="fas fa-info-circle mr-1"></i> Game running in secure sandbox. Controls: Keyboard/Mouse.
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  const frame = document.getElementById('game-frame');
+  frame.srcdoc = game.code;
+}
+
+// ===== BLOG ENGINE =====
+function renderBlog() {
+  const container = document.getElementById('blog-list');
+  if (!container) return;
+  container.innerHTML = state.posts.map(p => `
+    <div class="card overflow-hidden md:flex animate-in">
+      <div class="md:w-48 h-48 md:h-auto overflow-hidden">
+        <img src="${p.cover}" alt="${p.title}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+      </div>
+      <div class="p-6 flex-1">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="badge badge-admin">${p.cat}</span>
+          <span class="text-[10px]" style="color:var(--muted)">${p.date}</span>
+        </div>
+        <h3 class="font-display text-lg font-bold mb-3 hover:text-red-500 cursor-pointer transition-colors">${p.title}</h3>
+        <p class="text-sm mb-4 line-clamp-2" style="color:var(--muted)">${p.content}</p>
+        <button class="text-xs font-bold" style="color:var(--accent)">READ FULL LOG <i class="fas fa-chevron-right ml-1"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== HUB ENGINE =====
+function renderHub() {
+  const container = document.getElementById('hub-messages');
+  if (!container) return;
+  const msgs = state.hubMessages[state.currentChannel] || [];
+  container.innerHTML = msgs.map(m => `
+    <div class="hub-msg ${m.user === 'You' || (state.isAdmin && m.user === 'Admin') ? 'self' : 'other'}">
+      <div class="flex items-center justify-between mb-1 gap-4">
+        <span class="font-display text-[10px] font-bold" style="color:${m.isBot ? 'var(--accent)' : 'var(--gold)'}">${m.user}</span>
+        <span class="text-[9px]" style="color:var(--muted)">${m.time}</span>
+      </div>
+      <div class="text-sm">${m.text}</div>
+    </div>
+  `).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function switchChannel(ch, el) {
+  state.currentChannel = ch;
+  document.querySelectorAll('.channel-item').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('channel-title').textContent = '# ' + ch;
+  renderHub();
+}
+
+function sendHubMessage() {
+  const input = document.getElementById('hub-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!state.hubMessages[state.currentChannel]) state.hubMessages[state.currentChannel] = [];
+  const now = new Date();
+  state.hubMessages[state.currentChannel].push({
+    user: state.isAdmin ? 'Admin' : 'You', text,
+    time: now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0')
+  });
+  input.value = '';
+  saveState();
+  renderHub();
+  // Bot response after a delay
+  setTimeout(() => {
+    const responses = [
+      'Great point! The team is looking into this.',
+      'Thanks for sharing! We appreciate the feedback.',
+      'Interesting! This aligns with our roadmap.',
+      'Noted! We will discuss this in our next meeting.',
+      'Awesome! Keep the suggestions coming.'
+    ];
+    state.hubMessages[state.currentChannel].push({
+      user: 'CRG_Bot', text: responses[Math.floor(Math.random() * responses.length)],
+      time: new Date().getHours().toString().padStart(2,'0') + ':' + new Date().getMinutes().toString().padStart(2,'0'),
+      isBot: true
+    });
+    saveState();
+    renderHub();
+  }, 1500);
+}
+
+// ===== CONTACT =====
+function submitContact(e) {
+  e.preventDefault();
+  showToast('Message sent! We will get back to you soon.', 'success');
+  e.target.reset();
+}
+
+// ===== GITHUB =====
+function simulateGitHubConnect() {
+  const btn = event.target;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>CONNECTING...';
+  btn.disabled = true;
+  setTimeout(() => {
+    state.ghConnected = true;
+    document.getElementById('gh-not-connected').style.display = 'none';
+    document.getElementById('gh-connected').style.display = 'block';
+    renderGHRepos();
+    showToast('GitHub connected successfully!', 'success');
+  }, 2000);
+}
+
+function renderGHRepos() {
+  const repos = [
+    { name: 'inferno-run', lang: 'JavaScript', stars: 142, icon: 'fa-gamepad' },
+    { name: 'neon-blaster', lang: 'JavaScript', stars: 98, icon: 'fa-rocket' },
+    { name: 'crg-website', lang: 'HTML/CSS', stars: 67, icon: 'fa-globe' },
+    { name: 'crg-engine', lang: 'Rust', stars: 234, icon: 'fa-cogs' },
+    { name: 'shadow-protocol', lang: 'C++', stars: 312, icon: 'fa-ghost' }
+  ];
+  document.getElementById('gh-repos').innerHTML = repos.map(r => `
+    <div class="flex items-center gap-3 p-3 rounded-lg" style="background:var(--bg);border:1px solid var(--border)">
+      <i class="fas ${r.icon}" style="color:var(--accent);width:20px;text-align:center"></i>
+      <div class="flex-1">
+        <div class="text-sm font-bold">${r.name}</div>
+        <div class="text-xs" style="color:var(--muted)">${r.lang}</div>
+      </div>
+      <div class="text-xs" style="color:var(--gold)"><i class="fas fa-star mr-1"></i>${r.stars}</div>
+      <input type="checkbox" class="gh-repo-check" value="${r.name}" title="Select for import/sync">
+    </div>
+  `).join('');
+}
+
+function ghAction(action) {
+  const selected = [...document.querySelectorAll('.gh-repo-check:checked')].map(c => c.value);
+  const msgs = {
+    import: `Importing ${selected.length || 'all'} repositories as games...`,
+    export: 'Exporting site data to GitHub repository...',
+    sync: `Syncing ${selected.length || 'all'} repositories...`
+  };
+  showToast(msgs[action], 'info');
+  setTimeout(() => showToast('GitHub ' + action + ' completed! (demo)', 'success'), 2000);
+}
+
+// ===== AI ASSISTANT =====
+let speechSynth = window.speechSynthesis;
+let recognition = null;
+let aiConversationHistory = [];
+
+function initAI() {
+  // Add welcome message
+  addAIMessage('ai', 'Hey there! I\'m CRG AI, your personal assistant for everything C·R·G STUDIO. Ask me about our games, request features, or if you\'re admin — I can even edit the site for you. Try voice input too!');
+  // Init speech recognition
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    recognition.onresult = function(e) {
+      const text = e.results[0][0].transcript;
+      addAIMessage('user', text);
+      processAICommand(text);
+      stopListening();
+    };
+    recognition.onerror = function(e) {
+      stopListening();
+      if (e.error !== 'no-speech') showToast('Voice error: ' + e.error, 'error');
+    };
+    recognition.onend = function() { stopListening(); };
+  }
+}
+
+function toggleAIPanel() {
+  document.getElementById('ai-panel').classList.toggle('open');
+}
+
+function addAIMessage(role, text) {
+  const container = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  if (role === 'ai' || role === 'system') {
+    div.className = 'hub-msg other';
+    div.innerHTML = `<div class="font-display text-xs font-bold mb-1" style="color:${role === 'system' ? 'var(--gold)' : 'var(--accent)'}">${role === 'system' ? '<i class="fas fa-shield-alt mr-1"></i>SYSTEM' : '<i class="fas fa-fire mr-1"></i>CRG AI'}</div><div class="text-sm" style="line-height:1.6">${text}</div>`;
+  } else {
+    div.className = 'hub-msg self';
+    div.innerHTML = `<div class="text-sm">${text}</div>`;
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  aiConversationHistory.push({ role, text });
+}
+
+function sendAIMessage() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+  addAIMessage('user', text);
+  input.value = '';
+  processAICommand(text);
+}
+
+function processAICommand(input) {
+  const lower = input.toLowerCase();
+
+  // Admin-only commands
+  if (lower.includes('change') && (lower.includes('title') || lower.includes('heading') || lower.includes('text'))) {
+    if (state.isAdmin) { aiEditSite(input); return; }
+    else { aiRespond('That\'s an admin-only feature. Please log in to edit the site.'); return; }
+  }
+  if (lower.includes('add') && (lower.includes('game') || lower.includes('banner') || lower.includes('section'))) {
+    if (state.isAdmin) { aiEditSite(input); return; }
+    else { aiRespond('I can only modify the site for authenticated admins. Log in to unlock live editing.'); return; }
+  }
+  if (lower.includes('edit') || lower.includes('modify') || lower.includes('update') || lower.includes('remove') || lower.includes('delete')) {
+    if (state.isAdmin) { aiEditSite(input); return; }
+  }
+
+  // Game-related queries
+  if (lower.includes('game') && (lower.includes('play') || lower.includes('what') || lower.includes('list') || lower.includes('show'))) {
+    const gameNames = state.games.map(g => g.title).join(', ');
+    aiRespond(`We have ${state.games.length} games in our library: ${gameNames}. The WebGL games — Inferno Run, Neon Blaster, and Cyber Drift — are playable right here in the browser! Want me to take you to the games page?`, 'excited');
+    return;
+  }
+  if (lower.includes('inferno')) {
+    aiRespond('Inferno Run is our signature endless runner! Dodge fire obstacles by clicking or pressing Space to jump. The longer you survive, the faster it gets. It\'s free to play — head to the Games section to try it!', 'excited');
+    return;
+  }
+  if (lower.includes('neon') || lower.includes('blaster')) {
+    aiRespond('Neon Blaster is a retro space shooter with gorgeous neon glow effects. Move with arrow keys or WASD, and your ship auto-fires. Click for extra shots. How high can you score?', 'calm');
+    return;
+  }
+  if (lower.includes('premium') || lower.includes('pro') || lower.includes('subscribe') || lower.includes('price')) {
+    aiRespond('Our freemium model has three tiers: Free (demo access), Pro at $4.99/month (full library + early access + ad-free), and Studio at $14.99/month (source code + dev tools + GitHub sync). Want me to open the pricing page?', 'calm');
+    return;
+  }
+  if (lower.includes('github')) {
+    aiRespond('We have full GitHub integration! You can import repositories as playable games, export site data to a repo, or auto-sync changes. Click the GitHub icon in the top bar to connect your account.', 'excited');
+    return;
+  }
+  if (lower.includes('blog') || lower.includes('dev log') || lower.includes('news')) {
+    aiRespond('Our dev blog covers everything from technical deep-dives to behind-the-scenes stories. We have ' + state.posts.length + ' posts so far, including dev logs, tutorials, and announcements. Check out the Blog section!', 'calm');
+    return;
+  }
+  if (lower.includes('contact') || lower.includes('email') || lower.includes('reach')) {
+    aiRespond('You can reach us at contact@crgstudio.com, or use the contact form on the Contact page. We\'re also on LinkedIn, Twitter/X, Discord, and GitHub. We typically respond within 24 hours!', 'calm');
+    return;
+  }
+  if (lower.includes('about') || lower.includes('who') || lower.includes('what is crg')) {
+    aiRespond('C·R·G STUDIO is an independent game development studio with six verticals: Games, Music, Videos, Web Apps, Books, and Software. We specialize in WebGL browser games but also publish on Steam, Epic, App Store, and Google Play. We\'re driven by fire and code!', 'excited');
+    return;
+  }
+  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('sup')) {
+    const greetings = [
+      'Hey! Great to see you here. What can I help you with?',
+      'Hello! Welcome to C·R·G STUDIO. Looking for a game to play or need info?',
+      'Hi there! I\'m fired up to help. What\'s on your mind?'
+    ];
+    aiRespond(greetings[Math.floor(Math.random() * greetings.length)], 'excited');
+    return;
+  }
+  if (lower.includes('thank') || lower.includes('thanks') || lower.includes('thx')) {
+    aiRespond('You\'re welcome! Always happy to help. Anything else?', 'calm');
+    return;
+  }
+  if (lower.includes('funny') || lower.includes('joke') || lower.includes('laugh')) {
+    aiRespond('Why do game developers prefer dark mode? Because light attracts bugs! Ha... okay that was terrible. But seriously, I\'m here for the tech, not the comedy.', 'laughing');
+    return;
+  }
+  if (lower.includes('help') || lower.includes('can you')) {
+    aiRespond('I can help you with: navigating the site, finding games, explaining features, answering questions about the studio, and if you\'re admin — I can live-edit the site with voice or text commands. Just ask!', 'calm');
+    return;
+  }
+  if (lower.includes('privacy') || lower.includes('policy') || lower.includes('terms') || lower.includes('legal')) {
+    aiRespond('We take privacy seriously. You can read our full Privacy Policy and Terms of Service in the footer. We never sell your data, use encryption, and respect your rights under GDPR.', 'calm');
+    return;
+  }
+
+  // Fallback — try to be helpful
+  const fallbacks = [
+    'Interesting question! I\'m not sure I have a specific answer for that, but I can tell you about our games, premium plans, GitHub integration, or help you navigate the site. What interests you?',
+    'Hmm, I don\'t have specific info on that, but I\'m great with anything related to C·R·G STUDIO — games, blog, community, tech stack. What would you like to know?',
+    'I\'m still learning! For now I can help with game info, site navigation, admin editing, and studio details. Try asking about a specific game or feature!'
+  ];
+  aiRespond(fallbacks[Math.floor(Math.random() * fallbacks.length)], 'calm');
+}
+
+function aiRespond(text, emotion = 'neutral') {
+  addAIMessage('ai', text);
+  if (state.aiVoiceEnabled && speechSynth) {
+    speakWithEmotion(text, emotion);
+  }
+}
+
+// ===== VOICE SYNTHESIS WITH EMOTIONS =====
+function speakWithEmotion(text, emotion) {
+  speechSynth.cancel();
+  // Handle laughter specially
+  if (emotion === 'laughing') {
+    speakLaughter(() => {
+      // After laughing, speak the text normally
+      const utterance = createUtterance(text, 'neutral');
+      speechSynth.speak(utterance);
+    });
+    return;
+  }
+  // Split text into sentences for natural pauses (breathing)
+  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  let chain = speechSynth;
+  sentences.forEach((sentence, i) => {
+    const u = createUtterance(sentence.trim(), emotion, i > 0);
+    chain.speak(u);
+    chain = u;
+  });
+}
+
+function createUtterance(text, emotion, addPause = false) {
+  const u = new SpeechSynthesisUtterance(text);
+  // Select a good voice
+  const voices = speechSynth.getVoices();
+  const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) ||
+                    voices.find(v => v.lang.startsWith('en')) || voices[0];
+  if (preferred) u.voice = preferred;
+  u.rate = 0.95;
+  u.pitch = 1.0;
+  u.volume = 0.9;
+
+  switch(emotion) {
+    case 'excited':
+      u.rate = 1.1 + Math.random() * 0.1;
+      u.pitch = 1.2 + Math.random() * 0.15;
+      u.volume = 1.0;
+      break;
+    case 'calm':
+      u.rate = 0.88 + Math.random() * 0.05;
+      u.pitch = 0.9 + Math.random() * 0.05;
+      u.volume = 0.8;
+      break;
+    case 'laughing':
+      u.rate = 1.3;
+      u.pitch = 1.4;
+      break;
+    default:
+      // Add slight natural variation
+      u.rate += (Math.random() - 0.5) * 0.06;
+      u.pitch += (Math.random() - 0.5) * 0.04;
+  }
+
+  // Add a small pause at start for breathing effect (except first sentence)
+  if (addPause) {
+    u.text = '... ' + text;
+  }
+
+  return u;
+}
+
+function speakLaughter(callback) {
+  const count = 3 + Math.floor(Math.random() * 3);
+  let chain = speechSynth;
+  for (let i = 0; i < count; i++) {
+    const u = new SpeechSynthesisUtterance(i % 2 === 0 ? 'ha' : 'he');
+    const voices = speechSynth.getVoices();
+    const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) || voices[0];
+    if (preferred) u.voice = preferred;
+    u.rate = 1.2 + Math.random() * 0.4;
+    u.pitch = 1.3 + Math.random() * 0.4;
+    if (i === count - 1) u.onend = callback;
+    speechSynth.speak(u);
+  }
+}
+
+// ===== LIVE EDITING ENGINE (AI DRIVEN) =====
+function toggleAIEdit() {
+  if (!state.isAdmin) {
+    showToast('Admin login required for editing', 'error');
+    return;
+  }
+  state.editMode = !state.editMode;
+  document.getElementById('ai-edit-btn').style.background = state.editMode ? 'var(--gold)' : 'rgba(255,215,0,0.1)';
+  document.getElementById('ai-edit-btn').style.color = state.editMode ? '#000' : 'var(--gold)';
+
+  const editables = document.querySelectorAll('h1, h2, h3, h4, p, span, .btn-primary, .btn-secondary, .nav-link');
+  editables.forEach(el => {
+    if (state.editMode) {
+      el.contentEditable = 'true';
+      el.classList.add('editable-highlight');
+      el.addEventListener('blur', () => {
+        saveState();
+        showToast('Changes saved locally', 'success');
+      });
+    } else {
+      el.contentEditable = 'false';
+      el.classList.remove('editable-highlight');
+    }
+  });
+
+  if (state.editMode) {
+    addAIMessage('system', 'Live Edit Mode Enabled. You can now click any text to edit it, or tell me what to change!');
+  } else {
+    addAIMessage('system', 'Live Edit Mode Disabled.');
+  }
+}
+
+function toggleAIVoice() {
+  state.aiVoiceEnabled = !state.aiVoiceEnabled;
+  document.getElementById('ai-voice-btn').innerHTML = state.aiVoiceEnabled ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+  document.getElementById('ai-voice-btn').style.background = state.aiVoiceEnabled ? 'rgba(255,26,26,0.1)' : 'rgba(255,255,255,0.05)';
+  showToast('AI Voice ' + (state.aiVoiceEnabled ? 'Enabled' : 'Disabled'), 'info');
+  saveState();
+}
+
+function toggleListening() {
+  if (!recognition) {
+    showToast('Voice recognition not supported in this browser', 'error');
+    return;
+  }
+  if (state.isListening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+}
+
+function startListening() {
+  state.isListening = true;
+  document.getElementById('mic-btn').classList.add('listening');
+  document.getElementById('ai-btn').classList.add('listening');
+  document.getElementById('ai-status').textContent = 'Listening...';
+  recognition.start();
+}
+
+function stopListening() {
+  state.isListening = false;
+  document.getElementById('mic-btn').classList.remove('listening');
+  document.getElementById('ai-btn').classList.remove('listening');
+  document.getElementById('ai-status').textContent = 'Online';
+  if (recognition) recognition.stop();
+}
+
+function aiEditSite(command) {
+  const lower = command.toLowerCase();
+  addAIMessage('system', 'Analyzing edit command: "' + command + '"');
+
+  // Simple rule-based editing for demo
+  if (lower.includes('change title to')) {
+    const newTitle = command.split(/to/i)[1].trim().replace(/['"]/g, '');
+    document.querySelector('h1').textContent = newTitle;
+    aiRespond('Title changed to ' + newTitle, 'excited');
+  }
+  else if (lower.includes('change background to red')) {
+    document.documentElement.style.setProperty('--bg', '#300');
+    aiRespond('Background updated to deep red. Looks intense!', 'excited');
+  }
+  else if (lower.includes('add a new game called')) {
+    const name = command.split(/called/i)[1].trim().replace(/['"]/g, '');
+    const newGame = {
+      id: 'g' + (state.games.length + 1),
+      title: name,
+      desc: 'A new game added via CRG AI command.',
+      type: 'webgl',
+      tags: ['new', 'ai-generated'],
+      premium: false,
+      featured: true,
+      thumb: 'https://picsum.photos/seed/' + name + '/400/225',
+      code: '<html><body style="background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif"><div>New Game Prototype: ' + name + '</div></body></html>'
+    };
+    state.games.unshift(newGame);
+    renderFeaturedGames();
+    renderGames();
+    aiRespond('I\'ve added "' + name + '" to your game library and featured it on the home page!', 'excited');
+  }
+  else {
+    aiRespond('I understood you want to edit the site, but I need a more specific command like "Change title to..." or "Add a new game called...".', 'calm');
+  }
+  saveState();
+}
+
+// ===== INITIALIZE =====
+window.onload = init;
+</script>
+</body>
+</html>
